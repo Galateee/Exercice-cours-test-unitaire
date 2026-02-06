@@ -1,0 +1,6 @@
+{
+  "bail": 1,
+  "verbose": true,
+  "collectCoverageFrom": ["src/**/*js[x]", "!src/reportWebVitals.js", "!src/index.js"],
+  "setupFiles": ["<rootDir>/.jest/setEnvVars.js"]
+}
