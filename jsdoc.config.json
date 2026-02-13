@@ -1,7 +1,12 @@
 {
   "source": {
-    "include": ["."],
-    "exclude": ["node_modules/", "server/"]
+    "include": ["./src"],
+    "exclude": ["node_modules/", "server/", "**/*.test.js", "**/*.spec.js", "build/", "coverage/", "public/", "./src/reportWebVitals.js", "./src/setupTests.js", "./src/App.js", "./src/index.js"],
+    "includePattern": ".+\\.js$",
+    "excludePattern": "(test|spec)\\.js$"
   },
-  "plugins": ["plugins/markdown"]
+  "plugins": ["plugins/markdown"],
+  "opts": {
+    "recurse": true
+  }
 }
