@@ -1,9 +1,22 @@
 {
   "source": {
     "include": ["./src"],
-    "exclude": ["node_modules/", "server/", "**/*.test.js", "**/*.spec.js", "build/", "coverage/", "public/", "./src/reportWebVitals.js", "./src/setupTests.js", "./src/App.js", "./src/index.js"],
-    "includePattern": ".+\\.js$",
-    "excludePattern": "(test|spec)\\.js$"
+    "exclude": [
+      "node_modules/",
+      "server/",
+      "**/*.test.js",
+      "**/*.test.jsx",
+      "**/*.spec.js",
+      "build/",
+      "coverage/",
+      "public/",
+      "./src/reportWebVitals.js",
+      "./src/setupTests.js",
+      "./src/App.js",
+      "./src/index.js"
+    ],
+    "includePattern": ".+\\.(js|jsx)$",
+    "excludePattern": "(test|spec)\\.(js|jsx)$"
   },
   "plugins": ["plugins/markdown"],
   "opts": {

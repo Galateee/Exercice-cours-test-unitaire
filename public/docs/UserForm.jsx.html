@@ -1,4 +1,32 @@
-import { useState } from "react";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: UserForm.jsx</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: UserForm.jsx</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import { useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import * as validators from "./validators";
 import "react-toastify/dist/ReactToastify.css";
@@ -194,138 +222,161 @@ const UserForm = () => {
   };
 
   return (
-    <div className="user-form-container">
-      <ToastContainer />
-      <form className="user-form" onSubmit={handleSubmit} noValidate aria-label="User registration form">
-        <h1>Registration Form</h1>
+    &lt;div className="user-form-container">
+      &lt;ToastContainer />
+      &lt;form className="user-form" onSubmit={handleSubmit} noValidate aria-label="User registration form">
+        &lt;h1>Registration Form&lt;/h1>
 
-        <div className="form-group">
-          <label htmlFor="firstName">First Name *</label>
-          <input
+        &lt;div className="form-group">
+          &lt;label htmlFor="firstName">First Name *&lt;/label>
+          &lt;input
             type="text"
             id="firstName"
             name="firstName"
             value={formData.firstName}
             onChange={handleChange}
             onBlur={handleBlur}
-            className={errors.firstName && touched.firstName ? "error" : ""}
-            aria-invalid={errors.firstName && touched.firstName ? "true" : "false"}
-            aria-describedby={errors.firstName && touched.firstName ? "firstName-error" : undefined}
+            className={errors.firstName &amp;&amp; touched.firstName ? "error" : ""}
+            aria-invalid={errors.firstName &amp;&amp; touched.firstName ? "true" : "false"}
+            aria-describedby={errors.firstName &amp;&amp; touched.firstName ? "firstName-error" : undefined}
           />
-          {errors.firstName && touched.firstName && (
-            <span id="firstName-error" className="error-message" role="alert">
+          {errors.firstName &amp;&amp; touched.firstName &amp;&amp; (
+            &lt;span id="firstName-error" className="error-message" role="alert">
               {errors.firstName}
-            </span>
+            &lt;/span>
           )}
-        </div>
+        &lt;/div>
 
-        <div className="form-group">
-          <label htmlFor="lastName">Last Name *</label>
-          <input
+        &lt;div className="form-group">
+          &lt;label htmlFor="lastName">Last Name *&lt;/label>
+          &lt;input
             type="text"
             id="lastName"
             name="lastName"
             value={formData.lastName}
             onChange={handleChange}
             onBlur={handleBlur}
-            className={errors.lastName && touched.lastName ? "error" : ""}
-            aria-invalid={errors.lastName && touched.lastName ? "true" : "false"}
-            aria-describedby={errors.lastName && touched.lastName ? "lastName-error" : undefined}
+            className={errors.lastName &amp;&amp; touched.lastName ? "error" : ""}
+            aria-invalid={errors.lastName &amp;&amp; touched.lastName ? "true" : "false"}
+            aria-describedby={errors.lastName &amp;&amp; touched.lastName ? "lastName-error" : undefined}
           />
-          {errors.lastName && touched.lastName && (
-            <span id="lastName-error" className="error-message" role="alert">
+          {errors.lastName &amp;&amp; touched.lastName &amp;&amp; (
+            &lt;span id="lastName-error" className="error-message" role="alert">
               {errors.lastName}
-            </span>
+            &lt;/span>
           )}
-        </div>
+        &lt;/div>
 
-        <div className="form-group">
-          <label htmlFor="email">Email *</label>
-          <input
+        &lt;div className="form-group">
+          &lt;label htmlFor="email">Email *&lt;/label>
+          &lt;input
             type="email"
             id="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
             onBlur={handleBlur}
-            className={errors.email && touched.email ? "error" : ""}
-            aria-invalid={errors.email && touched.email ? "true" : "false"}
-            aria-describedby={errors.email && touched.email ? "email-error" : undefined}
+            className={errors.email &amp;&amp; touched.email ? "error" : ""}
+            aria-invalid={errors.email &amp;&amp; touched.email ? "true" : "false"}
+            aria-describedby={errors.email &amp;&amp; touched.email ? "email-error" : undefined}
           />
-          {errors.email && touched.email && (
-            <span id="email-error" className="error-message" role="alert">
+          {errors.email &amp;&amp; touched.email &amp;&amp; (
+            &lt;span id="email-error" className="error-message" role="alert">
               {errors.email}
-            </span>
+            &lt;/span>
           )}
-        </div>
+        &lt;/div>
 
-        <div className="form-group">
-          <label htmlFor="birthDate">Birth date *</label>
-          <input
+        &lt;div className="form-group">
+          &lt;label htmlFor="birthDate">Birth date *&lt;/label>
+          &lt;input
             type="date"
             id="birthDate"
             name="birthDate"
             value={formData.birthDate}
             onChange={handleChange}
             onBlur={handleBlur}
-            className={errors.birthDate && touched.birthDate ? "error" : ""}
-            aria-invalid={errors.birthDate && touched.birthDate ? "true" : "false"}
-            aria-describedby={errors.birthDate && touched.birthDate ? "birthDate-error" : undefined}
+            className={errors.birthDate &amp;&amp; touched.birthDate ? "error" : ""}
+            aria-invalid={errors.birthDate &amp;&amp; touched.birthDate ? "true" : "false"}
+            aria-describedby={errors.birthDate &amp;&amp; touched.birthDate ? "birthDate-error" : undefined}
           />
-          {errors.birthDate && touched.birthDate && (
-            <span id="birthDate-error" className="error-message" role="alert">
+          {errors.birthDate &amp;&amp; touched.birthDate &amp;&amp; (
+            &lt;span id="birthDate-error" className="error-message" role="alert">
               {errors.birthDate}
-            </span>
+            &lt;/span>
           )}
-        </div>
+        &lt;/div>
 
-        <div className="form-group">
-          <label htmlFor="postalCode">Postal Code *</label>
-          <input
+        &lt;div className="form-group">
+          &lt;label htmlFor="postalCode">Postal Code *&lt;/label>
+          &lt;input
             type="text"
             id="postalCode"
             name="postalCode"
             value={formData.postalCode}
             onChange={handleChange}
             onBlur={handleBlur}
-            className={errors.postalCode && touched.postalCode ? "error" : ""}
-            aria-invalid={errors.postalCode && touched.postalCode ? "true" : "false"}
-            aria-describedby={errors.postalCode && touched.postalCode ? "postalCode-error" : undefined}
+            className={errors.postalCode &amp;&amp; touched.postalCode ? "error" : ""}
+            aria-invalid={errors.postalCode &amp;&amp; touched.postalCode ? "true" : "false"}
+            aria-describedby={errors.postalCode &amp;&amp; touched.postalCode ? "postalCode-error" : undefined}
             maxLength="5"
           />
-          {errors.postalCode && touched.postalCode && (
-            <span id="postalCode-error" className="error-message" role="alert">
+          {errors.postalCode &amp;&amp; touched.postalCode &amp;&amp; (
+            &lt;span id="postalCode-error" className="error-message" role="alert">
               {errors.postalCode}
-            </span>
+            &lt;/span>
           )}
-        </div>
+        &lt;/div>
 
-        <div className="form-group">
-          <label htmlFor="city">City *</label>
-          <input
+        &lt;div className="form-group">
+          &lt;label htmlFor="city">City *&lt;/label>
+          &lt;input
             type="text"
             id="city"
             name="city"
             value={formData.city}
             onChange={handleChange}
             onBlur={handleBlur}
-            className={errors.city && touched.city ? "error" : ""}
-            aria-invalid={errors.city && touched.city ? "true" : "false"}
-            aria-describedby={errors.city && touched.city ? "city-error" : undefined}
+            className={errors.city &amp;&amp; touched.city ? "error" : ""}
+            aria-invalid={errors.city &amp;&amp; touched.city ? "true" : "false"}
+            aria-describedby={errors.city &amp;&amp; touched.city ? "city-error" : undefined}
           />
-          {errors.city && touched.city && (
-            <span id="city-error" className="error-message" role="alert">
+          {errors.city &amp;&amp; touched.city &amp;&amp; (
+            &lt;span id="city-error" className="error-message" role="alert">
               {errors.city}
-            </span>
+            &lt;/span>
           )}
-        </div>
+        &lt;/div>
 
-        <button type="submit" className="submit-button" disabled={!isFormValid()} aria-label="Submit the form">
+        &lt;button type="submit" className="submit-button" disabled={!isFormValid()} aria-label="Submit the form">
           Submit
-        </button>
-      </form>
-    </div>
+        &lt;/button>
+      &lt;/form>
+    &lt;/div>
   );
 };
 
 export default UserForm;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-validators.html">validators</a></li></ul><h3>Classes</h3><ul><li><a href="ValidationError.html">ValidationError</a></li></ul><h3>Global</h3><ul><li><a href="global.html#UserForm">UserForm</a></li><li><a href="global.html#validateAge">validateAge</a></li><li><a href="global.html#validateEmail">validateEmail</a></li><li><a href="global.html#validateIdentity">validateIdentity</a></li><li><a href="global.html#validatePostalCode">validatePostalCode</a></li><li><a href="global.html#validateUser">validateUser</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Fri Feb 13 2026 17:30:59 GMT+0100 (heure normale d’Europe centrale)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
