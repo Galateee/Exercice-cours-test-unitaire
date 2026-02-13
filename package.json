@@ -1,33 +1,50 @@
 {
-  "name": "exercice-cours-test-unitaire",
-  "version": "1.0.0",
+  "name": "my-app",
+  "version": "0.1.0",
   "private": false,
-  "description": "",
-  "homepage": "https://github.com/Galateee/Exercice-cours-test-unitiare#readme",
-  "bugs": {
-    "url": "https://github.com/Galateee/Exercice-cours-test-unitiare/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Galateee/Exercice-cours-test-unitiare.git"
-  },
-  "license": "ISC",
-  "author": "Robin",
-  "type": "commonjs",
-  "main": "module.js",
-  "directories": {
-    "doc": "docs"
+  "dependencies": {
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^13.5.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-scripts": "5.0.1",
+    "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "test": "jest --coverage",
-    "jsdoc": "jsdoc -c ./jsdoc.config.json -r -d ./docs",
-    "jsdoc:clean": "if exist docs rmdir /s /q docs",
-    "jsdoc:fresh": "npm run jsdoc:clean && npm run jsdoc"
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "build-npm": "NODE_ENV=production && rm -rf dist && mkdir dist && npx babel src --out-dir dist --copy-files",
+    "test": "react-scripts test  --coverage --collectCoverageFrom=src/**/*js* --collectCoverageFrom=!src/reportWebVitals.js --collectCoverageFrom=!src/index.js --watchAll=false",
+    "jsdoc": "jsdoc -R ./README.md -c ./jsdoc.config.json -r -d ./public/docs",
+    "test:coverage": "react-scripts test --coverage --watchAll=false",
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   },
   "devDependencies": {
     "@babel/preset-env": "^7.29.0",
     "babel-jest": "^30.2.0",
-    "jest": "^30.2.0",
+    "jest": "^27.5.1",
     "jsdoc": "^4.0.5"
   }
 }
