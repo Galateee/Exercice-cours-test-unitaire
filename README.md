@@ -1,70 +1,281 @@
-# Getting Started with Create React App
+# 📝 Exercice Tests Unitaires - Application React
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+![Build and Test](https://github.com/Galateee/Exercice-cours-test-unitaire/actions/workflows/build_test_deploy_react.yml/badge.svg)
+[![codecov](https://codecov.io/gh/Galateee/Exercice-cours-test-unitaire/branch/main/graph/badge.svg)](https://codecov.io/gh/Galateee/Exercice-cours-test-unitaire)
 
-## Available Scripts
+Application React dédiée à l'apprentissage des tests unitaires et de l'intégration continue. Ce projet implémente un système de validation de formulaire utilisateur avec une couverture de tests complète et un pipeline CI/CD automatisé.
 
-In the project directory, you can run:
+## Liens
 
-### `npm start`
+- **[Application en ligne](https://galateee.github.io/Exercice-cours-test-unitaire/)**
+- **[Documentation technique](https://galateee.github.io/Exercice-cours-test-unitaire/docs/)**
+- **[Rapport de couverture (Codecov)](https://codecov.io/gh/Galateee/Exercice-cours-test-unitaire)**
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Table des matières
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- [Fonctionnalités](#-fonctionnalités)
+- [Prérequis](#-prérequis)
+- [Installation](#-installation)
+- [Scripts disponibles](#-scripts-disponibles)
+- [Tests](#-tests)
+- [Documentation](#-documentation)
+- [CI/CD](#-cicd)
+- [Structure du projet](#-structure-du-projet)
+- [Technologies utilisées](#-technologies-utilisées)
 
-### `npm test`
+## Fonctionnalités
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- **Validation de formulaire utilisateur** avec feedback en temps réel
+- **Validateurs modulaires** pour :
+  - Email (format RFC 5322)
+  - Âge (18-120 ans)
+  - Nom et prénom (format français)
+  - Code postal français
+- **Tests unitaires complets** (100% de couverture)
+- **Tests d'intégration** du formulaire React
+- **CI/CD automatisé** avec GitHub Actions
+- **Documentation technique** générée automatiquement
+- **Déploiement continu** sur GitHub Pages
 
-### `npm run build`
+## Prérequis
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- **Node.js** >= 20.x
+- **npm** >= 9.x
+- **Git**
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Installation
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```bash
+# Cloner le repository
+git clone https://github.com/Galateee/Exercice-cours-test-unitaire.git
 
-### `npm run eject`
+# Naviguer dans le dossier
+cd Exercice-cours-test-unitaire
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+# Installer les dépendances
+npm install
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Scripts disponibles
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### Développement
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+```bash
+# Démarrer le serveur de développement
+npm start
+# Ouvre http://localhost:3000
+```
 
-## Learn More
+### Production
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```bash
+# Créer le build de production
+npm run build
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+# Déployer sur GitHub Pages
+npm run deploy
+```
 
-### Code Splitting
+### Tests
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+```bash
+# Lancer les tests en mode watch
+npm test
 
-### Analyzing the Bundle Size
+# Lancer les tests avec couverture
+npm run test:coverage
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### Documentation
 
-### Making a Progressive Web App
+```bash
+# Générer la documentation JSDoc
+npm run jsdoc
+# Documentation disponible dans public/docs/
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## Tests
 
-### Advanced Configuration
+Le projet utilise **Jest** et **React Testing Library** pour les tests unitaires et d'intégration.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+### Couverture des tests
 
-### Deployment
+- **Tests unitaires** : Tous les validateurs sont testés individuellement
+- **Tests d'intégration** : Le formulaire React est testé avec des scénarios réels
+- **Couverture** : 100% des fonctions, branches et lignes
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+- [Plan de test (TEST_PLAN.md)](TEST_PLAN.md)
 
-### `npm run build` fails to minify
+### Exécution locale
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+```bash
+# Tests interactifs
+npm test
+
+# Tests avec rapport de couverture
+npm run test:coverage
+
+# Rapport disponible dans coverage/lcov-report/index.html
+```
+
+### Exemple de test
+
+```javascript
+describe("emailValidator", () => {
+  it("should validate correct email", () => {
+    expect(() => validateEmail("test@example.com")).not.toThrow();
+  });
+
+  it("should reject invalid email", () => {
+    expect(() => validateEmail("invalid-email")).toThrow(ValidationError);
+  });
+});
+```
+
+## Documentation
+
+La documentation technique est générée automatiquement avec **JSDoc** et déployée avec l'application.
+
+### Accès à la documentation
+
+- **En ligne** : [Documentation technique](https://galateee.github.io/Exercice-cours-test-unitaire/docs/)
+- **Local** : `npm run jsdoc` puis ouvrir `public/docs/index.html`
+
+### Modules documentés
+
+- **Validateurs** : `ageValidator`, `emailValidator`, `identityValidator`, `postalCodeValidator`, `userValidator`
+- **Composants React** : `UserForm`, `App`
+- **Classes** : `ValidationError`
+
+## CI/CD
+
+Le projet utilise **GitHub Actions** pour l'intégration et le déploiement continus.
+
+### Pipeline automatisé
+
+```yaml
+Trigger: Push sur main
+  ↓
+Job 1: build_test
+  ├─ Checkout code
+  ├─ Setup Node.js 20.x
+  ├─ Install dependencies
+  ├─ Run tests with coverage
+  ├─ Upload coverage to Codecov
+  ├─ Generate JSDoc
+  ├─ Build React app
+  └─ Upload artifact
+  ↓
+Job 2: deploy_pages
+  └─ Deploy to GitHub Pages
+```
+
+### Fichier workflow
+
+Le workflow est défini dans `.github/workflows/build_test_deploy_react.yml`
+
+### Vérification
+
+Chaque push déclenche automatiquement :
+
+1. Installation des dépendances
+2. Exécution de tous les tests
+3. Génération du rapport de couverture
+4. Upload vers Codecov
+5. Génération de la documentation
+6. Build de production
+7. Déploiement sur GitHub Pages
+
+## Structure du projet
+
+```
+Exercice-cours-test-unitaire/
+├── .github/
+│   └── workflows/
+│       └── build_test_deploy_react.yml    # Configuration CI/CD
+├── public/
+│   ├── docs/                               # Documentation JSDoc générée
+│   ├── index.html
+│   └── manifest.json
+├── src/
+│   ├── validators/                         # Modules de validation
+│   │   ├── ageValidator.js
+│   │   ├── ageValidator.test.js
+│   │   ├── emailValidator.js
+│   │   ├── emailValidator.test.js
+│   │   ├── identityValidator.js
+│   │   ├── identityValidator.test.js
+│   │   ├── postalCodeValidator.js
+│   │   ├── postalCodeValidator.test.js
+│   │   ├── userValidator.js
+│   │   ├── userValidator.test.js
+│   │   └── ValidationError.js
+│   ├── App.js                              # Composant principal
+│   ├── App.test.js
+│   ├── UserForm.jsx                        # Formulaire de validation
+│   ├── UserForm.test.jsx
+│   └── index.js
+├── build/                                  # Build de production (généré)
+├── coverage/                               # Rapport de couverture (généré)
+├── package.json
+├── jest.config.json                        # Configuration Jest
+├── jsdoc.config.json                       # Configuration JSDoc
+└── README.md
+```
+
+## Technologies utilisées
+
+### Frontend
+
+- **React** 19.2.4 - Framework UI
+- **React DOM** 19.2.4 - Rendu React
+
+### Tests
+
+- **Jest** 27.5.1 - Framework de test
+- **React Testing Library** 16.3.2 - Tests de composants React
+- **@testing-library/user-event** 14.6.1 - Simulation d'interactions utilisateur
+
+### Outils de développement
+
+- **React Scripts** 5.0.1 - Tooling Create React App
+- **JSDoc** 4.0.5 - Génération de documentation
+- **Codecov** - Analyse de couverture de code
+
+### CI/CD
+
+- **GitHub Actions** - Intégration et déploiement continus
+- **GitHub Pages** - Hébergement de l'application
+
+## Scripts npm
+
+| Script                  | Description                               |
+| ----------------------- | ----------------------------------------- |
+| `npm start`             | Lance le serveur de développement         |
+| `npm test`              | Exécute les tests avec couverture         |
+| `npm run build`         | Crée le build de production               |
+| `npm run jsdoc`         | Génère la documentation JSDoc             |
+| `npm run deploy`        | Déploie sur GitHub Pages                  |
+| `npm run test:coverage` | Tests avec rapport de couverture détaillé |
+
+## Objectifs pédagogiques
+
+Ce projet a été réalisé dans le cadre d'un exercice sur les tests unitaires et couvre :
+
+1. **Tests unitaires** - Validation de fonctions isolées
+2. **Tests d'intégration** - Validation de composants React
+3. **TDD** - Test-Driven Development
+4. **Couverture de code** - 100% de couverture
+5. **CI/CD** - Pipeline automatisé complet
+6. **Documentation** - Génération automatique avec JSDoc
+7. **Déploiement continu** - GitHub Pages
+
+## Auteur
+
+**Robin Vidal - M1 Expert Dev Full Stack**
+
+- GitHub: [@Galateee](https://github.com/Galateee)
+
+## Licence
+
+Ce projet est un exercice pédagogique dans le cadre d'une formation sur les tests unitaires.
