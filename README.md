@@ -1,4 +1,4 @@
-# 📝 Exercice Tests Unitaires - Application React
+# Exercice Tests Unitaires - Application React
 
 ![Build and Test](https://github.com/Galateee/Exercice-cours-test-unitaire/actions/workflows/build_test_deploy_react.yml/badge.svg)
 [![codecov](https://codecov.io/gh/Galateee/Exercice-cours-test-unitaire/branch/main/graph/badge.svg)](https://codecov.io/gh/Galateee/Exercice-cours-test-unitaire)
@@ -13,15 +13,15 @@ Application React dédiée à l'apprentissage des tests unitaires et de l'intég
 
 ## Table des matières
 
-- [Fonctionnalités](#-fonctionnalités)
-- [Prérequis](#-prérequis)
-- [Installation](#-installation)
-- [Scripts disponibles](#-scripts-disponibles)
-- [Tests](#-tests)
-- [Documentation](#-documentation)
-- [CI/CD](#-cicd)
-- [Structure du projet](#-structure-du-projet)
-- [Technologies utilisées](#-technologies-utilisées)
+- [Fonctionnalités](#fonctionnalités)
+- [Prérequis](#prérequis)
+- [Installation](#installation)
+- [Scripts disponibles](#scripts-disponibles)
+- [Tests](#tests)
+- [Documentation](#documentation)
+- [CI/CD](#cicd)
+- [Structure du projet](#structure-du-projet)
+- [Technologies utilisées](#technologies-utilisées)
 
 ## Fonctionnalités
 
@@ -104,7 +104,7 @@ Le projet utilise **Jest** et **React Testing Library** pour les tests unitaires
 - **Tests d'intégration** : Le formulaire React est testé avec des scénarios réels
 - **Couverture** : 100% des fonctions, branches et lignes
 
-- [Plan de test (TEST_PLAN.md)](TEST_PLAN.md)
+📄 **[Plan de test complet (TEST_PLAN.md)](https://github.com/Galateee/Exercice-cours-test-unitaire/blob/main/TEST_PLAN.md)**
 
 ### Exécution locale
 
