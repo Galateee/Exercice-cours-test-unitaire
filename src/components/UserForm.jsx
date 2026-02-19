@@ -279,7 +279,7 @@ const UserForm = ({ onUserRegistered }) => {
     <div className="user-form-container">
       <ToastContainer />
       <form className="user-form" onSubmit={handleSubmit} noValidate aria-label="User registration form">
-        <h1>Registration Form</h1>
+        <h1 data-cy="form-title">Registration Form</h1>
 
         <div className="form-group">
           <label htmlFor="firstName">First Name *</label>

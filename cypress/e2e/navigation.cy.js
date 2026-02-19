@@ -107,7 +107,7 @@ describe("Scénario d'Erreur - Validation et état inchangé", () => {
     cy.get("[data-cy='input-postalCode']").type("33000");
     cy.get("[data-cy='input-city']").type("Bordeaux");
 
-    cy.get("[data-cy='input-email']").blur();
+    cy.get("[data-cy='input-email']").focus().blur();
 
     // 4. Vérifier l'erreur affichée
     cy.get("[data-cy='error-email']").should("be.visible");
