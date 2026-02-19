@@ -6,28 +6,28 @@
  */
 
 /**
- * Scénario Nominal - Navigation et inscription d'un nouvel utilisateur
+ * Nominal Scenario - Navigation and new user registration
  */
-describe("Scénario Nominal - Navigation et inscription", () => {
+describe("Nominal Scenario - Navigation and registration", () => {
   beforeEach(() => {
     cy.clearLocalStorage();
   });
 
-  it("devrait permettre d'inscrire un utilisateur et voir la mise à jour du compteur et de la liste", () => {
-    // 1. Navigation vers Accueil → Vérifier "0 utilisateur inscrit" et liste vide
+  it("should allow user registration and see counter and list update", () => {
+    // 1. Navigate to Home → Verify "0 users registered" and empty list
     cy.visit("/");
     cy.get("[data-cy='home-page']").should("be.visible");
     cy.get("[data-cy='user-count-value']").should("contain", "0");
     cy.get("[data-cy='empty-state']").should("be.visible");
     cy.get("[data-cy='users-list']").should("not.exist");
 
-    // 2. Clic/Navigation vers le Formulaire (/register)
+    // 2. Click/Navigate to the Form (/register)
     cy.get("[data-cy='register-button']").click();
     cy.url().should("include", "/register");
     cy.get("[data-cy='register-page']").should("be.visible");
     cy.get("[data-cy='form-title']").should("contain", "Registration Form");
 
-    // 3. Ajout d'un nouvel utilisateur valide (Succès)
+    // 3. Add a new valid user (Success)
     cy.get("[data-cy='input-firstName']").type("Jean");
     cy.get("[data-cy='input-lastName']").type("Dupont");
     cy.get("[data-cy='input-email']").type("jean.dupont@example.com");
@@ -43,11 +43,11 @@ describe("Scénario Nominal - Navigation et inscription", () => {
     cy.get("[data-cy='submit-button']").should("not.be.disabled");
     cy.get("[data-cy='submit-button']").click();
 
-    // 4. Redirection ou Navigation vers l'Accueil
+    // 4. Redirect or Navigate to Home
     cy.url().should("not.include", "/register");
     cy.url().should("eq", Cypress.config().baseUrl + "/");
 
-    // 5. Vérifier "1 utilisateur inscrit" ET la présence du nouvel utilisateur dans la liste
+    // 5. Verify "1 user registered" AND the presence of the new user in the list
     cy.get("[data-cy='user-count-value']").should("contain", "1");
     cy.get("[data-cy='users-list']").should("be.visible");
     cy.get("[data-cy='users-table']").should("be.visible");
@@ -62,9 +62,9 @@ describe("Scénario Nominal - Navigation et inscription", () => {
 });
 
 /**
- * Scénario d'Erreur - Tentative d'ajout invalide avec état inchangé
+ * Error Scenario - Invalid submission attempt with unchanged state
  */
-describe("Scénario d'Erreur - Validation et état inchangé", () => {
+describe("Error Scenario - Validation and unchanged state", () => {
   beforeEach(() => {
     cy.clearLocalStorage();
     const existingUser = {
@@ -81,8 +81,8 @@ describe("Scénario d'Erreur - Validation et état inchangé", () => {
     });
   });
 
-  it("devrait refuser un email déjà pris et garder l'état inchangé (1 utilisateur)", () => {
-    // 1. Partant de l'état précédent (1 inscrit)
+  it("should reject an already registered email and keep state unchanged (1 user)", () => {
+    // 1. Starting from previous state (1 registered user)
     cy.visit("/");
     cy.get("[data-cy='user-count-value']").should("contain", "1");
     cy.get("[data-cy='users-tbody']").within(() => {
@@ -90,14 +90,14 @@ describe("Scénario d'Erreur - Validation et état inchangé", () => {
       cy.contains("marie.martin@example.com").should("be.visible");
     });
 
-    // 2. Navigation vers le Formulaire
+    // 2. Navigate to the Form
     cy.get("[data-cy='register-button']").click();
     cy.url().should("include", "/register");
 
-    // 3. Tentative d'ajout invalide (email déjà pris)
+    // 3. Attempt to add with invalid data (email already taken)
     cy.get("[data-cy='input-firstName']").type("Pierre");
     cy.get("[data-cy='input-lastName']").type("Dubois");
-    cy.get("[data-cy='input-email']").type("marie.martin@example.com"); // Email déjà utilisé
+    cy.get("[data-cy='input-email']").type("marie.martin@example.com"); // Email already in use
 
     const birthDate = new Date();
     birthDate.setFullYear(birthDate.getFullYear() - 25);
@@ -109,16 +109,16 @@ describe("Scénario d'Erreur - Validation et état inchangé", () => {
 
     cy.get("[data-cy='input-email']").focus().blur();
 
-    // 4. Vérifier l'erreur affichée
+    // 4. Verify the error is displayed
     cy.get("[data-cy='error-email']").should("be.visible");
     cy.get("[data-cy='error-email']").should("contain", "already registered");
     cy.get("[data-cy='submit-button']").should("be.disabled");
 
-    // 5. Retour vers l'Accueil
+    // 5. Return to Home
     cy.get("[data-cy='back-to-home-button']").click();
     cy.url().should("not.include", "/register");
 
-    // 6. Vérifier "Toujours 1 utilisateur inscrit" et la liste inchangée
+    // 6. Verify "Still 1 registered user" and unchanged list
     cy.get("[data-cy='user-count-value']").should("contain", "1");
     cy.get("[data-cy='users-tbody']").within(() => {
       cy.contains("Marie").should("be.visible");
@@ -128,30 +128,30 @@ describe("Scénario d'Erreur - Validation et état inchangé", () => {
     });
   });
 
-  it("devrait refuser un formulaire avec champs vides et garder l'état inchangé (1 utilisateur)", () => {
-    // 1. Partant de l'état précédent (1 inscrit)
+  it("should reject a form with empty fields and keep state unchanged (1 user)", () => {
+    // 1. Starting from previous state (1 registered user)
     cy.visit("/");
     cy.get("[data-cy='user-count-value']").should("contain", "1");
 
-    // 2. Navigation vers le Formulaire
+    // 2. Navigate to the Form
     cy.get("[data-cy='register-button']").click();
     cy.url().should("include", "/register");
 
-    // 3. Tentative d'ajout invalide (champs vides)
+    // 3. Attempt to add with invalid data (empty fields)
     cy.get("[data-cy='submit-button']").should("be.disabled");
 
     cy.get("[data-cy='input-firstName']").type("T");
     cy.get("[data-cy='input-firstName']").blur();
 
-    // 4. Vérifier l'erreur affichée
+    // 4. Verify the error is displayed
     cy.get("[data-cy='error-firstName']").should("be.visible");
     cy.get("[data-cy='submit-button']").should("be.disabled");
 
-    // 5. Retour vers l'Accueil sans soumettre
+    // 5. Return to Home without submitting
     cy.get("[data-cy='back-to-home-button']").click();
     cy.url().should("not.include", "/register");
 
-    // 6. Vérifier "Toujours 1 utilisateur inscrit" et la liste inchangée
+    // 6. Verify "Still 1 registered user" and unchanged list
     cy.get("[data-cy='user-count-value']").should("contain", "1");
     cy.get("[data-cy='users-tbody']").within(() => {
       cy.contains("Marie").should("be.visible");
@@ -160,7 +160,7 @@ describe("Scénario d'Erreur - Validation et état inchangé", () => {
 });
 
 /**
- * Tests supplémentaires de navigation
+ * Additional navigation tests
  */
 describe("Navigation E2E Tests", () => {
   beforeEach(() => {
@@ -232,7 +232,7 @@ describe("Navigation E2E Tests", () => {
 
     cy.url().should("not.include", "/register");
 
-    cy.contains("Utilisateur enregistré avec succès").should("be.visible");
+    cy.contains("User successfully registered").should("be.visible");
 
     cy.contains("Total users:").should("contain", "1");
     cy.contains("John").should("be.visible");

@@ -18,7 +18,7 @@ function Home() {
 
   useEffect(() => {
     if (location.state?.newUserEmail) {
-      toast.success("Utilisateur enregistré avec succès !", {
+      toast.success("User successfully registered!", {
         position: "top-right",
         autoClose: 3000,
         hideProgressBar: false,

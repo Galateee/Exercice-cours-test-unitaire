@@ -295,7 +295,7 @@ describe("UserForm - Integration Tests", () => {
     expect(savedData[0]).toHaveProperty("age");
 
     expect(toast.success).toHaveBeenCalledWith(
-      "Formulaire soumis avec succès !",
+      "Form successfully submitted!",
       expect.objectContaining({
         position: "top-right",
         autoClose: 3000,

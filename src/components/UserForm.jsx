@@ -252,7 +252,7 @@ const UserForm = ({ onUserRegistered }) => {
       if (onUserRegistered) {
         onUserRegistered(userData);
       } else {
-        toast.success("Formulaire soumis avec succès !", TOAST_CONFIG);
+        toast.success("Form successfully submitted!", TOAST_CONFIG);
       }
 
       setFormData(INITIAL_FORM_DATA);

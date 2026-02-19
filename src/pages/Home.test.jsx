@@ -201,7 +201,7 @@ describe("Home Component", () => {
 
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith(
-        "Utilisateur enregistré avec succès !",
+        "User successfully registered!",
         expect.objectContaining({
           position: "top-right",
           autoClose: 3000,
