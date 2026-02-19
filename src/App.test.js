@@ -33,4 +33,25 @@ describe("App Component", () => {
     const totalText = screen.getByText(/Total users:/i);
     expect(totalText).toBeInTheDocument();
   });
+
+  test("uses PUBLIC_URL basename in production mode", () => {
+    const originalEnv = process.env.NODE_ENV;
+    const originalPublicUrl = process.env.PUBLIC_URL;
+
+    process.env.NODE_ENV = "production";
+    process.env.PUBLIC_URL = "/test-app";
+
+    const { unmount } = render(<App />);
+    expect(screen.getByText(/Registered Users/i)).toBeInTheDocument();
+    unmount();
+
+    process.env.NODE_ENV = "test";
+    process.env.PUBLIC_URL = "";
+
+    render(<App />);
+    expect(screen.getByText(/Registered Users/i)).toBeInTheDocument();
+
+    process.env.NODE_ENV = originalEnv;
+    process.env.PUBLIC_URL = originalPublicUrl;
+  });
 });
