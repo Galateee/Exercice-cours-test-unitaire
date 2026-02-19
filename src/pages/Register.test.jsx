@@ -27,10 +27,13 @@ describe("Register Component", () => {
     jest.clearAllMocks();
   });
 
-  test("renders back to home button", () => {
+  test("renders back to home button", async () => {
+    const user = userEvent.setup();
     renderRegister();
-    const backButton = screen.getByRole("link", { name: /Back to Home/i });
+    const backButton = screen.getByRole("button", { name: /Back to Home/i });
     expect(backButton).toBeInTheDocument();
+
+    await user.click(backButton);
   });
 
   test("renders registration form", () => {
@@ -80,11 +83,11 @@ describe("Register Component", () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/Formulaire soumis avec succès/i)).toBeInTheDocument();
+      const storedUsers = JSON.parse(localStorage.getItem("registeredUsers"));
+      expect(storedUsers).toHaveLength(1);
     });
 
     const storedUsers = JSON.parse(localStorage.getItem("registeredUsers"));
-    expect(storedUsers).toHaveLength(1);
     expect(storedUsers[0].firstName).toBe("John");
     expect(storedUsers[0].email).toBe("john.doe@example.com");
   });

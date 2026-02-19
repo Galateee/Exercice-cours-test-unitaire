@@ -1,18 +1,26 @@
-import { render, screen } from "@testing-library/react";
-import { BrowserRouter } from "react-router-dom";
+import { render, screen, waitFor, act } from "@testing-library/react";
+import { MemoryRouter, __resetLocationState } from "react-router-dom";
 import Home from "./Home";
 import { UserProvider } from "../contexts/UserContext";
+import { toast } from "react-toastify";
+
+jest.mock("react-toastify", () => ({
+  ToastContainer: () => null,
+  toast: {
+    success: jest.fn(),
+  },
+}));
 
 /**
  * Helper function to render Home component with required providers
  */
-const renderHome = () => {
+const renderHome = (locationState = null) => {
   return render(
-    <BrowserRouter>
+    <MemoryRouter initialEntries={[{ pathname: "/", state: locationState }]}>
       <UserProvider>
         <Home />
       </UserProvider>
-    </BrowserRouter>,
+    </MemoryRouter>,
   );
 };
 
@@ -23,6 +31,8 @@ const renderHome = () => {
 describe("Home Component", () => {
   beforeEach(() => {
     localStorage.clear();
+    __resetLocationState();
+    toast.success.mockClear();
   });
 
   test("renders home page heading", () => {
@@ -168,5 +178,51 @@ describe("Home Component", () => {
     renderHome();
     const link = screen.getByRole("link", { name: /Register New User/i });
     expect(link).toHaveAttribute("href", "/register");
+  });
+
+  test("shows toast and highlights new user when redirected from registration", async () => {
+    jest.useFakeTimers();
+
+    const mockUsers = [
+      {
+        firstName: "John",
+        lastName: "Doe",
+        email: "john.doe@example.com",
+        age: 25,
+        postalCode: "75001",
+        city: "Paris",
+        timestamp: new Date().toISOString(),
+      },
+    ];
+
+    localStorage.setItem("registeredUsers", JSON.stringify(mockUsers));
+
+    renderHome({ newUserEmail: "john.doe@example.com" });
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith(
+        "Utilisateur enregistré avec succès !",
+        expect.objectContaining({
+          position: "top-right",
+          autoClose: 3000,
+        }),
+      );
+    });
+
+    const rows = screen.getAllByRole("row");
+    const userRow = rows.find((row) => row.textContent.includes("john.doe@example.com"));
+    expect(userRow).toHaveClass("new-user-highlight");
+
+    await act(async () => {
+      jest.advanceTimersByTime(3000);
+    });
+
+    await waitFor(() => {
+      const rowsAfter = screen.getAllByRole("row");
+      const userRowAfter = rowsAfter.find((row) => row.textContent.includes("john.doe@example.com"));
+      expect(userRowAfter).not.toHaveClass("new-user-highlight");
+    });
+
+    jest.useRealTimers();
   });
 });

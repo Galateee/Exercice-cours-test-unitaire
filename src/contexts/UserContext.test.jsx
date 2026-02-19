@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, act } from "@testing-library/react";
 import { UserProvider, useUsers } from "./UserContext";
 
 /**
@@ -87,7 +87,9 @@ describe("UserContext", () => {
     );
 
     const addButton = screen.getByText("Add User");
-    addButton.click();
+    await act(async () => {
+      addButton.click();
+    });
 
     await waitFor(() => {
       expect(screen.getByTestId("user-count")).toHaveTextContent("1");
@@ -95,7 +97,6 @@ describe("UserContext", () => {
 
     expect(screen.getByText("test@example.com")).toBeInTheDocument();
 
-    // Verify localStorage
     const storedUsers = JSON.parse(localStorage.getItem("registeredUsers"));
     expect(storedUsers).toHaveLength(1);
     expect(storedUsers[0].email).toBe("test@example.com");
@@ -108,10 +109,8 @@ describe("UserContext", () => {
       </UserProvider>,
     );
 
-    // Initially empty
     expect(screen.getByTestId("user-count")).toHaveTextContent("0");
 
-    // Manually add data to localStorage (simulating external update)
     const newUser = {
       firstName: "External",
       lastName: "User",
@@ -123,9 +122,10 @@ describe("UserContext", () => {
     };
     localStorage.setItem("registeredUsers", JSON.stringify([newUser]));
 
-    // Trigger refresh
     const refreshButton = screen.getByText("Refresh Users");
-    refreshButton.click();
+    await act(async () => {
+      refreshButton.click();
+    });
 
     await waitFor(() => {
       expect(screen.getByTestId("user-count")).toHaveTextContent("1");
@@ -135,9 +135,10 @@ describe("UserContext", () => {
   });
 
   test("handles corrupted localStorage data gracefully", () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+
     localStorage.setItem("registeredUsers", "invalid-json");
 
-    // Should not throw error
     render(
       <UserProvider>
         <TestComponent />
@@ -145,6 +146,9 @@ describe("UserContext", () => {
     );
 
     expect(screen.getByTestId("user-count")).toHaveTextContent("0");
+    expect(consoleError).toHaveBeenCalledWith("Error loading users from localStorage:", expect.any(Error));
+
+    consoleError.mockRestore();
   });
 
   test("handles missing localStorage data", () => {
@@ -162,7 +166,6 @@ describe("UserContext", () => {
   test("throws error when useUsers is used outside UserProvider", () => {
     const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
 
-    // Component that tries to use context outside provider
     function InvalidComponent() {
       useUsers();
       return <div>Test</div>;
@@ -184,17 +187,16 @@ describe("UserContext", () => {
 
     const addButton = screen.getByText("Add User");
 
-    // Add first user
-    addButton.click();
+    await act(async () => {
+      addButton.click();
+    });
     await waitFor(() => {
       expect(screen.getByTestId("user-count")).toHaveTextContent("1");
     });
 
-    // Add second user (need to modify TestComponent for this, or verify localStorage)
     const storedUsers = JSON.parse(localStorage.getItem("registeredUsers"));
     expect(storedUsers).toHaveLength(1);
 
-    // Manually add another user to localStorage and refresh
     storedUsers.push({
       firstName: "Second",
       lastName: "User",
@@ -207,7 +209,9 @@ describe("UserContext", () => {
     localStorage.setItem("registeredUsers", JSON.stringify(storedUsers));
 
     const refreshButton = screen.getByText("Refresh Users");
-    refreshButton.click();
+    await act(async () => {
+      refreshButton.click();
+    });
 
     await waitFor(() => {
       expect(screen.getByTestId("user-count")).toHaveTextContent("2");
