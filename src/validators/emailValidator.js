@@ -55,4 +55,49 @@ function validateEmail(email) {
   }
 }
 
+/**
+ * Validates that an email address is not already registered.
+ *
+ * @function validateUniqueEmail
+ * @param {string} email - The email address to check for uniqueness
+ * @param {Array<Object>} [existingUsers=null] - Optional array of existing users. If not provided, reads from localStorage
+ * @throws {ValidationError} Throws an exception if the email is already registered
+ * @returns {void}
+ */
+function validateUniqueEmail(email, existingUsers = null) {
+  let users = existingUsers;
+
+  if (users === null) {
+    try {
+      const storedUsers = localStorage.getItem("registeredUsers");
+      users = storedUsers ? JSON.parse(storedUsers) : [];
+    } catch (error) {
+      users = [];
+    }
+  }
+
+  const emailLower = email.toLowerCase();
+  const emailExists = users.some((user) => user.email && user.email.toLowerCase() === emailLower);
+
+  if (emailExists) {
+    throw new ValidationError("This email address is already registered", "EMAIL_ALREADY_EXISTS");
+  }
+}
+
+/**
+ * Validates email format and uniqueness.
+ * Combines format validation and uniqueness check.
+ *
+ * @function validateEmailComplete
+ * @param {string} email - The email address to validate
+ * @param {Array<Object>} [existingUsers=null] - Optional array of existing users for uniqueness check
+ * @throws {ValidationError} Throws an exception if validation fails
+ * @returns {void}
+ */
+function validateEmailComplete(email, existingUsers = null) {
+  validateEmail(email);
+  validateUniqueEmail(email, existingUsers);
+}
+
 export default validateEmail;
+export { validateUniqueEmail, validateEmailComplete };

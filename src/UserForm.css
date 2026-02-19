@@ -47,6 +47,22 @@
   border-color: #4caf50;
 }
 
+.form-group input:-webkit-autofill,
+.form-group input:-webkit-autofill:hover,
+.form-group input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px white inset;
+  box-shadow: 0 0 0px 1000px white inset;
+  -webkit-text-fill-color: #333;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+.form-group input.error:-webkit-autofill,
+.form-group input.error:-webkit-autofill:hover,
+.form-group input.error:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px #fff5f5 inset;
+  box-shadow: 0 0 0px 1000px #fff5f5 inset;
+}
+
 .form-group input.error {
   border-color: #f44336;
   background-color: #fff5f5;

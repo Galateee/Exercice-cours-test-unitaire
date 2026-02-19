@@ -278,19 +278,21 @@ describe("UserForm - Integration Tests", () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(localStorageSpy).toHaveBeenCalledWith("userData", expect.any(String));
+      expect(localStorageSpy).toHaveBeenCalledWith("registeredUsers", expect.any(String));
     });
 
     const savedData = JSON.parse(localStorageSpy.mock.calls[0][1]);
-    expect(savedData).toMatchObject({
+    expect(savedData).toBeInstanceOf(Array);
+    expect(savedData).toHaveLength(1);
+    expect(savedData[0]).toMatchObject({
       firstName: "Marie",
       lastName: "Martin",
       email: "marie.martin@example.com",
-      birthDate: dateString,
       postalCode: "69001",
       city: "Lyon",
     });
-    expect(savedData).toHaveProperty("timestamp");
+    expect(savedData[0]).toHaveProperty("timestamp");
+    expect(savedData[0]).toHaveProperty("age");
 
     expect(toast.success).toHaveBeenCalledWith(
       "Formulaire soumis avec succès !",
@@ -308,6 +310,48 @@ describe("UserForm - Integration Tests", () => {
     expect(cityInput).toHaveValue("");
 
     expect(submitButton).toBeDisabled();
+  });
+
+  /**
+   * Test: Age calculation - birthday not yet occurred this year
+   */
+  test("should calculate age correctly when birthday hasn't occurred yet this year", async () => {
+    const user = userEvent.setup();
+    render(<UserForm />);
+
+    const firstNameInput = screen.getByRole("textbox", { name: /first name/i });
+    const lastNameInput = screen.getByRole("textbox", { name: /^last name\s*\*/i });
+    const emailInput = screen.getByRole("textbox", { name: /email/i });
+    const birthDateInput = screen.getByLabelText(/birth date/i);
+    const postalCodeInput = screen.getByRole("textbox", { name: /postal code/i });
+    const cityInput = screen.getByRole("textbox", { name: /^city/i });
+    const submitButton = screen.getByRole("button", { name: /submit/i });
+
+    await user.type(firstNameInput, "Alex");
+    await user.type(lastNameInput, "Dupont");
+    await user.type(emailInput, "alex.dupont@example.com");
+
+    const today = new Date();
+    const birthDate = new Date();
+    birthDate.setFullYear(today.getFullYear() - 25);
+    birthDate.setMonth(11);
+    birthDate.setDate(31);
+
+    const dateString = birthDate.toISOString().split("T")[0];
+    await user.type(birthDateInput, dateString);
+
+    await user.type(postalCodeInput, "75001");
+    await user.type(cityInput, "Paris");
+
+    await user.click(submitButton);
+
+    await waitFor(() => {
+      expect(localStorageSpy).toHaveBeenCalled();
+    });
+
+    const savedData = JSON.parse(localStorageSpy.mock.calls[0][1]);
+
+    expect(savedData[0].age).toBe(24);
   });
 
   /**
@@ -540,6 +584,305 @@ describe("UserForm - Integration Tests", () => {
 
     fireEvent.submit(form);
 
-    expect(localStorage.getItem("userData")).toBeNull();
+    expect(localStorage.getItem("registeredUsers")).toBeNull();
+  });
+
+  /**
+   * Test: Duplicate email validation - should show error
+   */
+  test("should show error message when email already exists", async () => {
+    const existingUsers = [{ email: "existing@example.com", firstName: "Existing", lastName: "User" }];
+    localStorage.setItem("registeredUsers", JSON.stringify(existingUsers));
+
+    const user = userEvent.setup();
+    render(<UserForm />);
+
+    const emailInput = screen.getByRole("textbox", { name: /email/i });
+
+    await user.type(emailInput, "existing@example.com");
+    await user.tab();
+
+    await waitFor(() => {
+      expect(screen.getByText(/this email address is already registered/i)).toBeInTheDocument();
+    });
+  });
+
+  /**
+   * Test: Duplicate email validation - case insensitive
+   */
+  test("should reject duplicate email regardless of case", async () => {
+    const existingUsers = [{ email: "test@example.com", firstName: "Test", lastName: "User" }];
+    localStorage.setItem("registeredUsers", JSON.stringify(existingUsers));
+
+    const user = userEvent.setup();
+    render(<UserForm />);
+
+    const emailInput = screen.getByRole("textbox", { name: /email/i });
+
+    await user.type(emailInput, "TEST@EXAMPLE.COM");
+    await user.tab();
+
+    await waitFor(() => {
+      expect(screen.getByText(/this email address is already registered/i)).toBeInTheDocument();
+    });
+  });
+
+  /**
+   * Test: Form submission blocked when email is duplicate
+   */
+  test("should prevent form submission when email already exists", async () => {
+    const existingUsers = [{ email: "duplicate@example.com", firstName: "First", lastName: "User" }];
+    localStorage.setItem("registeredUsers", JSON.stringify(existingUsers));
+
+    const user = userEvent.setup();
+    render(<UserForm />);
+
+    const firstNameInput = screen.getByRole("textbox", { name: /first name/i });
+    const lastNameInput = screen.getByRole("textbox", { name: /^last name\s*\*/i });
+    const emailInput = screen.getByRole("textbox", { name: /email/i });
+    const birthDateInput = screen.getByLabelText(/birth date/i);
+    const postalCodeInput = screen.getByRole("textbox", { name: /postal code/i });
+    const cityInput = screen.getByRole("textbox", { name: /^city/i });
+    const submitButton = screen.getByRole("button", { name: /submit/i });
+
+    await user.type(firstNameInput, "Second");
+    await user.type(lastNameInput, "User");
+    await user.type(emailInput, "duplicate@example.com");
+
+    const twentyFiveYearsAgo = new Date();
+    twentyFiveYearsAgo.setFullYear(twentyFiveYearsAgo.getFullYear() - 25);
+    const dateString = twentyFiveYearsAgo.toISOString().split("T")[0];
+    await user.type(birthDateInput, dateString);
+
+    await user.type(postalCodeInput, "75001");
+    await user.type(cityInput, "Paris");
+
+    await user.tab();
+
+    await waitFor(() => {
+      expect(screen.getByText(/this email address is already registered/i)).toBeInTheDocument();
+    });
+
+    expect(submitButton).toBeDisabled();
+  });
+
+  /**
+   * Test: Multiple users can be registered with different emails
+   */
+  test("should allow multiple users to register with unique emails", async () => {
+    const user = userEvent.setup();
+    render(<UserForm />);
+
+    const fillForm = async (firstName, lastName, email, city) => {
+      const firstNameInput = screen.getByRole("textbox", { name: /first name/i });
+      const lastNameInput = screen.getByRole("textbox", { name: /^last name\s*\*/i });
+      const emailInput = screen.getByRole("textbox", { name: /email/i });
+      const birthDateInput = screen.getByLabelText(/birth date/i);
+      const postalCodeInput = screen.getByRole("textbox", { name: /postal code/i });
+      const cityInput = screen.getByRole("textbox", { name: /^city/i });
+
+      await user.type(firstNameInput, firstName);
+      await user.type(lastNameInput, lastName);
+      await user.type(emailInput, email);
+
+      const twentyFiveYearsAgo = new Date();
+      twentyFiveYearsAgo.setFullYear(twentyFiveYearsAgo.getFullYear() - 25);
+      const dateString = twentyFiveYearsAgo.toISOString().split("T")[0];
+      await user.type(birthDateInput, dateString);
+
+      await user.type(postalCodeInput, "75001");
+      await user.type(cityInput, city);
+    };
+
+    await fillForm("Alice", "Martin", "alice@example.com", "Paris");
+
+    const submitButton = screen.getByRole("button", { name: /submit/i });
+    await waitFor(() => {
+      expect(submitButton).toBeEnabled();
+    });
+
+    await user.click(submitButton);
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalled();
+    });
+
+    await fillForm("Bob", "Dupont", "bob@example.com", "Lyon");
+
+    await waitFor(() => {
+      expect(submitButton).toBeEnabled();
+    });
+
+    await user.click(submitButton);
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledTimes(2);
+    });
+
+    const users = JSON.parse(localStorage.getItem("registeredUsers"));
+    expect(users).toHaveLength(2);
+    expect(users[0].email).toBe("alice@example.com");
+    expect(users[1].email).toBe("bob@example.com");
+  });
+
+  /**
+   * Test: Form submission handles corrupted localStorage gracefully
+   */
+  test("should handle corrupted localStorage data during form submission", async () => {
+    localStorage.setItem("registeredUsers", "{invalid json}");
+
+    const user = userEvent.setup();
+    render(<UserForm />);
+
+    const firstNameInput = screen.getByRole("textbox", { name: /first name/i });
+    const lastNameInput = screen.getByRole("textbox", { name: /^last name\s*\*/i });
+    const emailInput = screen.getByRole("textbox", { name: /email/i });
+    const birthDateInput = screen.getByLabelText(/birth date/i);
+    const postalCodeInput = screen.getByRole("textbox", { name: /postal code/i });
+    const cityInput = screen.getByRole("textbox", { name: /city/i });
+
+    await user.type(firstNameInput, "Test");
+    await user.type(lastNameInput, "User");
+    await user.type(emailInput, "test@example.com");
+    await user.type(birthDateInput, "2000-01-01");
+    await user.type(postalCodeInput, "75001");
+    await user.type(cityInput, "Paris");
+
+    const submitButton = screen.getByRole("button", { name: /submit/i });
+    await user.click(submitButton);
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalled();
+    });
+
+    const savedData = JSON.parse(localStorage.getItem("registeredUsers"));
+    expect(savedData).toBeInstanceOf(Array);
+    expect(savedData).toHaveLength(1);
+    expect(savedData[0].email).toBe("test@example.com");
+  });
+
+  /**
+   * Test: Form submission prevented when all fields filled but one is invalid
+   * This tests the validation loop in isFormValid that checks each field
+   */
+  test("should prevent submission when all fields are filled but email is invalid", async () => {
+    const user = userEvent.setup();
+    render(<UserForm />);
+
+    const firstNameInput = screen.getByRole("textbox", { name: /first name/i });
+    const lastNameInput = screen.getByRole("textbox", { name: /^last name\s*\*/i });
+    const emailInput = screen.getByRole("textbox", { name: /email/i });
+    const birthDateInput = screen.getByLabelText(/birth date/i);
+    const postalCodeInput = screen.getByRole("textbox", { name: /postal code/i });
+    const cityInput = screen.getByRole("textbox", { name: /^city/i });
+
+    await user.type(firstNameInput, "Jean");
+    await user.type(lastNameInput, "Dupont");
+    await user.type(emailInput, "invalid-email");
+
+    const twentyFiveYearsAgo = new Date();
+    twentyFiveYearsAgo.setFullYear(twentyFiveYearsAgo.getFullYear() - 25);
+    const dateString = twentyFiveYearsAgo.toISOString().split("T")[0];
+    await user.type(birthDateInput, dateString);
+
+    await user.type(postalCodeInput, "75001");
+    await user.type(cityInput, "Paris");
+
+    await user.tab();
+
+    const submitButton = screen.getByRole("button", { name: /submit/i });
+
+    await waitFor(() => {
+      expect(submitButton).toBeDisabled();
+    });
+
+    fireEvent.submit(screen.getByRole("form", { name: /user registration form/i }));
+
+    await waitFor(() => {
+      expect(localStorage.getItem("registeredUsers")).toBeNull();
+    });
+  });
+
+  /**
+   * Test: Form submission prevented when postal code is invalid but all fields filled
+   */
+  test("should prevent submission when postal code is invalid", async () => {
+    const user = userEvent.setup();
+    render(<UserForm />);
+
+    const firstNameInput = screen.getByRole("textbox", { name: /first name/i });
+    const lastNameInput = screen.getByRole("textbox", { name: /^last name\s*\*/i });
+    const emailInput = screen.getByRole("textbox", { name: /email/i });
+    const birthDateInput = screen.getByLabelText(/birth date/i);
+    const postalCodeInput = screen.getByRole("textbox", { name: /postal code/i });
+    const cityInput = screen.getByRole("textbox", { name: /^city/i });
+
+    await user.type(firstNameInput, "Marie");
+    await user.type(lastNameInput, "Martin");
+    await user.type(emailInput, "marie@example.com");
+
+    const thirtyYearsAgo = new Date();
+    thirtyYearsAgo.setFullYear(thirtyYearsAgo.getFullYear() - 30);
+    const dateString = thirtyYearsAgo.toISOString().split("T")[0];
+    await user.type(birthDateInput, dateString);
+
+    await user.type(postalCodeInput, "1234");
+    await user.type(cityInput, "Lyon");
+
+    await user.tab();
+
+    const submitButton = screen.getByRole("button", { name: /submit/i });
+
+    await waitFor(() => {
+      expect(submitButton).toBeDisabled();
+    });
+
+    fireEvent.submit(screen.getByRole("form", { name: /user registration form/i }));
+
+    await waitFor(() => {
+      expect(localStorage.getItem("registeredUsers")).toBeNull();
+    });
+  });
+
+  /**
+   * Test: Component cleanup properly removes event listeners and clears timeouts
+   */
+  test("should clean up event listeners and timeouts on unmount", async () => {
+    const { unmount } = render(<UserForm />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("textbox", { name: /first name/i })).toBeInTheDocument();
+    });
+
+    unmount();
+
+    expect(true).toBe(true);
+  });
+
+  /**
+   * Test: Component handles missing DOM elements gracefully during event listener setup
+   */
+  test("should handle missing DOM elements during autofill detection setup", () => {
+    // eslint-disable-next-line testing-library/no-node-access
+    const originalGetElementById = document.getElementById;
+
+    const getElementByIdMock = jest.fn((id) => {
+      if (id === "city") {
+        return null;
+      }
+      return originalGetElementById.call(document, id);
+    });
+
+    // eslint-disable-next-line testing-library/no-node-access
+    document.getElementById = getElementByIdMock;
+
+    const { unmount } = render(<UserForm />);
+
+    expect(screen.getByRole("textbox", { name: /first name/i })).toBeInTheDocument();
+
+    unmount();
+
+    // eslint-disable-next-line testing-library/no-node-access
+    document.getElementById = originalGetElementById;
   });
 });

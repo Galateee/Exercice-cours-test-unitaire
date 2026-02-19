@@ -1,8 +1,60 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import * as validators from "./validators";
 import "react-toastify/dist/ReactToastify.css";
 import "./UserForm.css";
+
+/**
+ * Initial form data state
+ * @constant
+ */
+const INITIAL_FORM_DATA = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  birthDate: "",
+  postalCode: "",
+  city: "",
+};
+
+/**
+ * Initial errors state
+ * @constant
+ */
+const INITIAL_ERRORS = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  birthDate: "",
+  postalCode: "",
+  city: "",
+};
+
+/**
+ * Initial touched state
+ * @constant
+ */
+const INITIAL_TOUCHED = {
+  firstName: false,
+  lastName: false,
+  email: false,
+  birthDate: false,
+  postalCode: false,
+  city: false,
+};
+
+/**
+ * Toast notification configuration
+ * @constant
+ */
+const TOAST_CONFIG = {
+  position: "top-right",
+  autoClose: 3000,
+  hideProgressBar: false,
+  closeOnClick: true,
+  pauseOnHover: true,
+  draggable: true,
+};
 
 /**
  * UserForm Component - Registration form with real-time validation
@@ -14,41 +66,19 @@ import "./UserForm.css";
  * @returns {JSX.Element} The rendered form component
  */
 const UserForm = () => {
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    birthDate: "",
-    postalCode: "",
-    city: "",
-  });
-
-  const [errors, setErrors] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    birthDate: "",
-    postalCode: "",
-    city: "",
-  });
-
-  const [touched, setTouched] = useState({
-    firstName: false,
-    lastName: false,
-    email: false,
-    birthDate: false,
-    postalCode: false,
-    city: false,
-  });
+  const [formData, setFormData] = useState(INITIAL_FORM_DATA);
+  const [errors, setErrors] = useState(INITIAL_ERRORS);
+  const [touched, setTouched] = useState(INITIAL_TOUCHED);
 
   /**
    * Validates a single field using the appropriate validator function
    *
    * @param {string} fieldName - Name of the field to validate
    * @param {string} value - Value to validate
+   * @param {Array<Object>|null} existingUsers - Array of existing users for email uniqueness check, or null to read from localStorage
    * @returns {string} Error message if validation fails, empty string otherwise
    */
-  const validateField = (fieldName, value) => {
+  const validateField = (fieldName, value, existingUsers) => {
     try {
       switch (fieldName) {
         case "firstName":
@@ -60,7 +90,7 @@ const UserForm = () => {
           return "";
 
         case "email":
-          validators.validateEmail(value);
+          validators.validateEmailComplete(value, existingUsers);
           return "";
 
         case "birthDate":
@@ -89,6 +119,55 @@ const UserForm = () => {
   };
 
   /**
+   * Detects browser autofill and triggers validation
+   * Chrome and other browsers fill forms without triggering React onChange events
+   * This effect polls the DOM to detect autofilled values and validates them
+   */
+  useEffect(() => {
+    const fields = ["firstName", "lastName", "email", "birthDate", "postalCode", "city"];
+
+    const checkAutofill = () => {
+      fields.forEach((fieldName) => {
+        const input = document.getElementById(fieldName);
+        if (input && input.value && input.value !== formData[fieldName]) {
+          setFormData((prev) => ({ ...prev, [fieldName]: input.value }));
+
+          setTouched((prev) => ({ ...prev, [fieldName]: true }));
+
+          const errorMessage = validateField(fieldName, input.value, null);
+          setErrors((prev) => ({ ...prev, [fieldName]: errorMessage }));
+        }
+      });
+    };
+
+    const timer1 = setTimeout(checkAutofill, 100);
+    const timer2 = setTimeout(checkAutofill, 500);
+
+    const handleAutoComplete = () => {
+      setTimeout(checkAutofill, 50);
+    };
+
+    const inputRefs = [];
+
+    fields.forEach((fieldName) => {
+      const input = document.getElementById(fieldName);
+      if (input) {
+        input.addEventListener("input", handleAutoComplete);
+        inputRefs.push(input);
+      }
+    });
+
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      inputRefs.forEach((input) => {
+        input.removeEventListener("input", handleAutoComplete);
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /**
    * Handles input change events with real-time validation
    *
    * @param {Event} e - Input change event
@@ -98,7 +177,7 @@ const UserForm = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
 
     if (touched[name]) {
-      const errorMessage = validateField(name, value);
+      const errorMessage = validateField(name, value, null);
       setErrors((prev) => ({ ...prev, [name]: errorMessage }));
     }
   };
@@ -112,30 +191,36 @@ const UserForm = () => {
     const { name, value } = e.target;
     setTouched((prev) => ({ ...prev, [name]: true }));
 
-    const errorMessage = validateField(name, value);
+    const errorMessage = validateField(name, value, null);
     setErrors((prev) => ({ ...prev, [name]: errorMessage }));
   };
 
   /**
    * Checks if the entire form is valid
+   * Validates all fields are filled and checks for any validation errors
    *
+   * @param {Array<Object>} existingUsers - Array of existing users for email uniqueness check (pass empty array if none)
    * @returns {boolean} True if form is valid, false otherwise
    */
-  const isFormValid = () => {
+  const isFormValid = (existingUsers) => {
     const allFieldsFilled = Object.values(formData).every((value) => value.trim() !== "");
     if (!allFieldsFilled) return false;
 
-    try {
-      validators.validateIdentity(formData.firstName);
-      validators.validateIdentity(formData.lastName);
-      validators.validateEmail(formData.email);
-      validators.validateAge(new Date(formData.birthDate));
-      validators.validatePostalCode(formData.postalCode);
-      validators.validateIdentity(formData.city);
-      return true;
-    } catch (error) {
-      return false;
+    const fieldValidations = [
+      { name: "firstName", value: formData.firstName },
+      { name: "lastName", value: formData.lastName },
+      { name: "email", value: formData.email },
+      { name: "birthDate", value: formData.birthDate },
+      { name: "postalCode", value: formData.postalCode },
+      { name: "city", value: formData.city },
+    ];
+
+    for (const field of fieldValidations) {
+      const error = validateField(field.name, field.value, existingUsers);
+      if (error) return false;
     }
+
+    return true;
   };
 
   /**
@@ -147,51 +232,58 @@ const UserForm = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (isFormValid()) {
+    let existingUsers = [];
+    try {
+      const storedUsers = localStorage.getItem("registeredUsers");
+      existingUsers = storedUsers ? JSON.parse(storedUsers) : [];
+    } catch {
+      existingUsers = [];
+    }
+
+    if (isFormValid(existingUsers)) {
+      const birthDate = new Date(formData.birthDate);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+
       const userData = {
-        ...formData,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        age: age,
+        postalCode: formData.postalCode,
+        city: formData.city,
         timestamp: new Date().toISOString(),
       };
 
-      localStorage.setItem("userData", JSON.stringify(userData));
+      existingUsers.push(userData);
+      localStorage.setItem("registeredUsers", JSON.stringify(existingUsers));
 
-      toast.success("Formulaire soumis avec succès !", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
+      toast.success("Formulaire soumis avec succès !", TOAST_CONFIG);
 
-      setFormData({
-        firstName: "",
-        lastName: "",
-        email: "",
-        birthDate: "",
-        postalCode: "",
-        city: "",
-      });
-
-      setErrors({
-        firstName: "",
-        lastName: "",
-        email: "",
-        birthDate: "",
-        postalCode: "",
-        city: "",
-      });
-
-      setTouched({
-        firstName: false,
-        lastName: false,
-        email: false,
-        birthDate: false,
-        postalCode: false,
-        city: false,
-      });
+      setFormData(INITIAL_FORM_DATA);
+      setErrors(INITIAL_ERRORS);
+      setTouched(INITIAL_TOUCHED);
     }
   };
+
+  /**
+   * Memoized button disabled state
+   * Recalculates only when formData changes to avoid unnecessary localStorage reads
+   */
+  const isButtonDisabled = useMemo(() => {
+    const allFieldsFilled = Object.values(formData).every((value) => value.trim() !== "");
+    if (!allFieldsFilled) return true;
+
+    const hasErrors = Object.values(errors).some((error) => error !== "");
+    if (hasErrors) return true;
+
+    return false;
+  }, [formData, errors]);
 
   return (
     <div className="user-form-container">
@@ -320,7 +412,7 @@ const UserForm = () => {
           )}
         </div>
 
-        <button type="submit" className="submit-button" disabled={!isFormValid()} aria-label="Submit the form">
+        <button type="submit" className="submit-button" disabled={isButtonDisabled} aria-label="Submit the form">
           Submit
         </button>
       </form>
