@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
-import * as validators from "./validators";
+import * as validators from "../validators";
 import "react-toastify/dist/ReactToastify.css";
 import "./UserForm.css";
 
@@ -47,9 +47,11 @@ const TOAST_CONFIG = {
  * @description Form component that collects user information (first name, last name, email,
  * birth date, postal code, city) with immediate validation feedback and localStorage persistence.
  *
+ * @param {Object} props - Component props
+ * @param {Function} [props.onUserRegistered] - Optional callback function called after successful registration with user data
  * @returns {JSX.Element} The rendered form component
  */
-const UserForm = () => {
+const UserForm = ({ onUserRegistered }) => {
   const [formData, setFormData] = useState(INITIAL_FORM_DATA);
   const [errors, setErrors] = useState(INITIAL_ERRORS);
   const [touched, setTouched] = useState(INITIAL_TOUCHED);
@@ -247,7 +249,11 @@ const UserForm = () => {
       existingUsers.push(userData);
       localStorage.setItem("registeredUsers", JSON.stringify(existingUsers));
 
-      toast.success("Formulaire soumis avec succès !", TOAST_CONFIG);
+      if (onUserRegistered) {
+        onUserRegistered(userData);
+      } else {
+        toast.success("Formulaire soumis avec succès !", TOAST_CONFIG);
+      }
 
       setFormData(INITIAL_FORM_DATA);
       setErrors(INITIAL_ERRORS);
