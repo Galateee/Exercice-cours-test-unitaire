@@ -20,15 +20,14 @@ function Register() {
    */
   const handleUserRegistered = (userData) => {
     addUser(userData);
-    // Navigate immediately to home page with new user email
     navigate("/", { state: { newUserEmail: userData.email } });
   };
 
   return (
-    <div className="register-page">
+    <div className="register-page" data-cy="register-page">
       <UserForm onUserRegistered={handleUserRegistered} />
       <div className="back-link">
-        <button onClick={() => navigate("/")} className="back-button">
+        <button onClick={() => navigate("/")} className="back-button" data-cy="back-to-home-button">
           ← Back to Home
         </button>
       </div>

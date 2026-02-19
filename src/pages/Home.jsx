@@ -16,7 +16,6 @@ function Home() {
   const location = useLocation();
   const [highlighte, setHighlighte] = useState(null);
 
-  // Show success toast when redirected from registration
   useEffect(() => {
     if (location.state?.newUserEmail) {
       toast.success("Utilisateur enregistré avec succès !", {
@@ -28,45 +27,43 @@ function Home() {
         draggable: true,
       });
 
-      // Store the new user email for highlighting
       setHighlighte(location.state.newUserEmail);
 
-      // Clear the navigation state
       window.history.replaceState({}, document.title);
 
-      // Remove highlight after animation
       setTimeout(() => {
         setHighlighte(null);
       }, 3000);
     }
   }, [location.state]);
 
-  // Sort users by timestamp (most recent first)
   const sortedUsers = [...users].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
   return (
-    <div className="home-container">
+    <div className="home-container" data-cy="home-page">
       <ToastContainer />
-      <h1>Registered Users</h1>
+      <h1 data-cy="home-title">Registered Users</h1>
 
-      <div className="stats">
+      <div className="stats" data-cy="user-count">
         <p>
-          Total users: <strong>{users.length}</strong>
+          Total users: <strong data-cy="user-count-value">{users.length}</strong>
         </p>
       </div>
 
       <Link to="/register" className="register-link">
-        <button className="register-button">Register New User</button>
+        <button className="register-button" data-cy="register-button">
+          Register New User
+        </button>
       </Link>
 
       {users.length === 0 ? (
-        <div className="empty-state">
+        <div className="empty-state" data-cy="empty-state">
           <p>No users registered yet.</p>
           <p>Click the button above to register your first user!</p>
         </div>
       ) : (
-        <div className="users-list">
-          <table>
+        <div className="users-list" data-cy="users-list">
+          <table data-cy="users-table">
             <thead>
               <tr>
                 <th>First Name</th>
@@ -78,7 +75,7 @@ function Home() {
                 <th>Registration Date</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody data-cy="users-tbody">
               {sortedUsers.map((user, index) => {
                 const isNewUser = highlighte === user.email;
                 return (

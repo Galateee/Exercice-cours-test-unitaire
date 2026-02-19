@@ -293,9 +293,10 @@ const UserForm = ({ onUserRegistered }) => {
             className={errors.firstName && touched.firstName ? "error" : ""}
             aria-invalid={errors.firstName && touched.firstName ? "true" : "false"}
             aria-describedby={errors.firstName && touched.firstName ? "firstName-error" : undefined}
+            data-cy="input-firstName"
           />
           {errors.firstName && touched.firstName && (
-            <span id="firstName-error" className="error-message" role="alert">
+            <span id="firstName-error" className="error-message" role="alert" data-cy="error-firstName">
               {errors.firstName}
             </span>
           )}
@@ -313,9 +314,10 @@ const UserForm = ({ onUserRegistered }) => {
             className={errors.lastName && touched.lastName ? "error" : ""}
             aria-invalid={errors.lastName && touched.lastName ? "true" : "false"}
             aria-describedby={errors.lastName && touched.lastName ? "lastName-error" : undefined}
+            data-cy="input-lastName"
           />
           {errors.lastName && touched.lastName && (
-            <span id="lastName-error" className="error-message" role="alert">
+            <span id="lastName-error" className="error-message" role="alert" data-cy="error-lastName">
               {errors.lastName}
             </span>
           )}
@@ -333,9 +335,10 @@ const UserForm = ({ onUserRegistered }) => {
             className={errors.email && touched.email ? "error" : ""}
             aria-invalid={errors.email && touched.email ? "true" : "false"}
             aria-describedby={errors.email && touched.email ? "email-error" : undefined}
+            data-cy="input-email"
           />
           {errors.email && touched.email && (
-            <span id="email-error" className="error-message" role="alert">
+            <span id="email-error" className="error-message" role="alert" data-cy="error-email">
               {errors.email}
             </span>
           )}
@@ -353,9 +356,10 @@ const UserForm = ({ onUserRegistered }) => {
             className={errors.birthDate && touched.birthDate ? "error" : ""}
             aria-invalid={errors.birthDate && touched.birthDate ? "true" : "false"}
             aria-describedby={errors.birthDate && touched.birthDate ? "birthDate-error" : undefined}
+            data-cy="input-birthDate"
           />
           {errors.birthDate && touched.birthDate && (
-            <span id="birthDate-error" className="error-message" role="alert">
+            <span id="birthDate-error" className="error-message" role="alert" data-cy="error-birthDate">
               {errors.birthDate}
             </span>
           )}
@@ -374,9 +378,10 @@ const UserForm = ({ onUserRegistered }) => {
             aria-invalid={errors.postalCode && touched.postalCode ? "true" : "false"}
             aria-describedby={errors.postalCode && touched.postalCode ? "postalCode-error" : undefined}
             maxLength="5"
+            data-cy="input-postalCode"
           />
           {errors.postalCode && touched.postalCode && (
-            <span id="postalCode-error" className="error-message" role="alert">
+            <span id="postalCode-error" className="error-message" role="alert" data-cy="error-postalCode">
               {errors.postalCode}
             </span>
           )}
@@ -394,15 +399,16 @@ const UserForm = ({ onUserRegistered }) => {
             className={errors.city && touched.city ? "error" : ""}
             aria-invalid={errors.city && touched.city ? "true" : "false"}
             aria-describedby={errors.city && touched.city ? "city-error" : undefined}
+            data-cy="input-city"
           />
           {errors.city && touched.city && (
-            <span id="city-error" className="error-message" role="alert">
+            <span id="city-error" className="error-message" role="alert" data-cy="error-city">
               {errors.city}
             </span>
           )}
         </div>
 
-        <button type="submit" className="submit-button" disabled={isButtonDisabled} aria-label="Submit the form">
+        <button type="submit" className="submit-button" disabled={isButtonDisabled} aria-label="Submit the form" data-cy="submit-button">
           Submit
         </button>
       </form>
