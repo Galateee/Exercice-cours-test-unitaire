@@ -34,8 +34,10 @@ Application React dédiée à l'apprentissage des tests unitaires et de l'intég
   - Âge (18-120 ans avec calcul précis)
   - Nom et prénom (format français)
   - Code postal français (5 chiffres)
-- **Tests complets** (190 tests, 100% de couverture)
-- **Tests d'intégration** du formulaire React
+- **Navigation SPA** avec React Router (pages Accueil + Inscription)
+- **Gestion d'état partagé** via Context React pour persistance des données
+- **Tests complets** (221 tests unitaires/intégration + 11 tests E2E, 100% de couverture)
+- **Tests End-to-End** avec Cypress (scénarios de navigation complexes)
 - **CI/CD automatisé** avec GitHub Actions
 - **Documentation technique** générée automatiquement
 - **Déploiement continu** sur GitHub Pages
@@ -121,8 +123,9 @@ Le projet utilise **Jest** et **React Testing Library** pour les tests unitaires
 ### Couverture des tests
 
 - **Tests unitaires** : Tous les validateurs sont testés individuellement
-- **Tests d'intégration** : Le formulaire React est testé avec des scénarios réels
-- **Couverture** : 100% des fonctions, branches et lignes
+- **Tests d'intégration** : Le formulaire React et les pages sont testés avec des scénarios réels
+- **Tests E2E (Cypress)** : 11 tests de navigation et parcours utilisateur complets
+- **Couverture** : 100% des fonctions, branches et lignes (221 tests)
 
 **[Plan de test complet (TEST_PLAN.md)](https://github.com/Galateee/Exercice-cours-test-unitaire/blob/main/TEST_PLAN.md)**
 
@@ -345,11 +348,13 @@ Ce projet a été réalisé dans le cadre d'un exercice sur les tests unitaires 
 
 1. **Tests unitaires** - Validation de fonctions isolées
 2. **Tests d'intégration** - Validation de composants React
-3. **TDD** - Test-Driven Development
-4. **Couverture de code** - 100% de couverture
-5. **CI/CD** - Pipeline automatisé complet
-6. **Documentation** - Génération automatique avec JSDoc
-7. **Déploiement continu** - GitHub Pages
+3. **Tests E2E** - Tests de navigation et parcours utilisateur avec Cypress
+4. **Architecture SPA** - Navigation multi-pages avec React Router et Context API
+5. **TDD** - Test-Driven Development
+6. **Couverture de code** - 100% de couverture (221 UT/IT + 11 E2E)
+7. **CI/CD** - Pipeline automatisé complet avec tests E2E
+8. **Documentation** - Génération automatique avec JSDoc
+9. **Déploiement continu** - GitHub Pages
 
 ## Auteur
 
