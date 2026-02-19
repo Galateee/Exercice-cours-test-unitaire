@@ -18,6 +18,7 @@ Application React dédiée à l'apprentissage des tests unitaires et de l'intég
 - [Installation](#installation)
 - [Scripts disponibles](#scripts-disponibles)
 - [Tests](#tests)
+- [Tests E2E (Cypress)](#tests-e2e-cypress)
 - [Documentation](#documentation)
 - [CI/CD](#cicd)
 - [Structure du projet](#structure-du-projet)
@@ -151,6 +152,62 @@ describe("emailValidator", () => {
 });
 ```
 
+## Tests E2E (Cypress)
+
+Le projet implémente des tests End-to-End avec **Cypress** pour valider les parcours utilisateurs complets à travers l'application multi-pages.
+
+### Architecture testée
+
+- **Navigation SPA** avec React Router
+- **État partagé** via Context React (UserContext)
+- **Persistance des données** entre les pages
+- **Scénarios de navigation** complexes
+
+### Scénarios E2E implémentés
+
+#### Scénario Nominal
+
+1. Navigation vers l'Accueil (/) → Vérification "0 utilisateur inscrit" et liste vide
+2. Navigation vers le Formulaire (/register)
+3. Ajout d'un nouvel utilisateur valide (Jean Dupont)
+4. Redirection automatique vers l'Accueil
+5. Vérification "1 utilisateur inscrit" ET présence du nouvel utilisateur dans la liste
+
+#### Scénario d'Erreur
+
+1. Partant de l'état précédent (1 inscrit)
+2. Navigation vers le Formulaire
+3. Tentative d'ajout invalide (email doublon ou champs vides)
+4. Vérification de l'erreur affichée
+5. Retour vers l'Accueil
+6. Vérification "Toujours 1 utilisateur inscrit" et liste inchangée
+
+### Exécution locale
+
+```bash
+# Mode interactif (interface graphique Cypress)
+npm run cypress
+
+# Mode headless (ligne de commande)
+npm run cypress:run
+# ou
+npx cypress run
+```
+
+### Sélecteurs robustes
+
+Tous les éléments testés utilisent des attributs `data-cy` pour garantir la stabilité des tests :
+
+```javascript
+cy.get("[data-cy='home-page']");
+cy.get("[data-cy='user-count']");
+cy.get("[data-cy='input-email']");
+```
+
+### Intégration CI/CD
+
+Les tests Cypress s'exécutent automatiquement dans le pipeline GitHub Actions en mode headless après les tests unitaires.
+
 ## Documentation
 
 La documentation technique est générée automatiquement avec **JSDoc** et déployée avec l'application.
@@ -248,6 +305,7 @@ Exercice-cours-test-unitaire/
 
 - **React** 19.2.4 - Framework UI (avec hooks : useState, useMemo, useEffect)
 - **React DOM** 19.2.4 - Rendu React
+- **React Router DOM** 7.13.0 - Navigation SPA
 - **react-toastify** 11.0.3 - Notifications utilisateur
 
 ### Tests
@@ -255,6 +313,7 @@ Exercice-cours-test-unitaire/
 - **Jest** 27.5.1 - Framework de test
 - **React Testing Library** 16.3.2 - Tests de composants React
 - **@testing-library/user-event** 14.6.1 - Simulation d'interactions utilisateur
+- **Cypress** 15.10.0 - Tests End-to-End
 
 ### Outils de développement
 
@@ -277,6 +336,8 @@ Exercice-cours-test-unitaire/
 | `npm run jsdoc`         | Génère la documentation JSDoc             |
 | `npm run deploy`        | Déploie sur GitHub Pages                  |
 | `npm run test:coverage` | Tests avec rapport de couverture détaillé |
+| `npm run cypress`       | Ouvre l'interface graphique Cypress       |
+| `npm run cypress:run`   | Exécute les tests E2E en mode headless    |
 
 ## Objectifs pédagogiques
 
