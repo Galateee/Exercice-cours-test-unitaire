@@ -223,8 +223,9 @@ La documentation technique est générée automatiquement avec **JSDoc** et dép
 ### Modules documentés
 
 - **Validateurs** : `ageValidator`, `emailValidator`, `identityValidator`, `postalCodeValidator`, `userValidator`
-- **Composants React** : `UserForm`, `App`
-- **Classes** : `ValidationError`
+- **Composants React** : `UserForm`, `App`, `Home`, `Register`
+- **Context** : `UserContext` avec typedef pour types User et UserContextValue
+- **Classes** : `ValidationError` avec exemples d'utilisation
 
 ## CI/CD
 
