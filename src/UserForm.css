@@ -106,7 +106,7 @@
 
 /* Toast container customization */
 .Toastify__toast--success {
-  background-color: #4caf50;
+  border: 1px solid #4caf50;
 }
 
 .Toastify__progress-bar--success {

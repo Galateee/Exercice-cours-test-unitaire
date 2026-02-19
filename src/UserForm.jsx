@@ -4,10 +4,6 @@ import * as validators from "./validators";
 import "react-toastify/dist/ReactToastify.css";
 import "./UserForm.css";
 
-/**
- * Initial form data state
- * @constant
- */
 const INITIAL_FORM_DATA = {
   firstName: "",
   lastName: "",
@@ -17,10 +13,6 @@ const INITIAL_FORM_DATA = {
   city: "",
 };
 
-/**
- * Initial errors state
- * @constant
- */
 const INITIAL_ERRORS = {
   firstName: "",
   lastName: "",
@@ -30,10 +22,6 @@ const INITIAL_ERRORS = {
   city: "",
 };
 
-/**
- * Initial touched state
- * @constant
- */
 const INITIAL_TOUCHED = {
   firstName: false,
   lastName: false,
@@ -43,10 +31,6 @@ const INITIAL_TOUCHED = {
   city: false,
 };
 
-/**
- * Toast notification configuration
- * @constant
- */
 const TOAST_CONFIG = {
   position: "top-right",
   autoClose: 3000,
