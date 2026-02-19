@@ -45,6 +45,13 @@ jobs:
         env:
           REACT_APP_SERVER_URL: ${{ secrets.REACT_APP_SERVER_URL }}
 
+      - name: Cypress run
+        uses: cypress-io/github-action@v6
+        with:
+          start: npm start
+          wait-on: "http://localhost:3000"
+          wait-on-timeout: 120
+
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v3

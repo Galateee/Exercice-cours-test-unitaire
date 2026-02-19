@@ -22,7 +22,9 @@
     "test:coverage": "react-scripts test --coverage --watchAll=false",
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
+    "deploy": "gh-pages -d build",
+    "cypress": "cypress open",
+    "cypress:run": "cypress run"
   },
   "eslintConfig": {
     "extends": [
@@ -45,6 +47,7 @@
   "devDependencies": {
     "@babel/preset-env": "^7.29.0",
     "babel-jest": "^30.2.0",
+    "cypress": "^15.10.0",
     "jest": "^27.5.1",
     "jsdoc": "^4.0.5",
     "react-toastify": "^11.0.5"
