@@ -26,16 +26,35 @@ Application React dédiée à l'apprentissage des tests unitaires et de l'intég
 ## Fonctionnalités
 
 - **Validation de formulaire utilisateur** avec feedback en temps réel
+- **Validation d'unicité d'email** avec localStorage (détection des doublons)
+- **Détection automatique de l'autofill Chrome** avec validation instantanée
 - **Validateurs modulaires** pour :
-  - Email (format RFC 5322)
-  - Âge (18-120 ans)
+  - Email (format RFC 5322 + unicité)
+  - Âge (18-120 ans avec calcul précis)
   - Nom et prénom (format français)
-  - Code postal français
-- **Tests unitaires complets** (100% de couverture)
+  - Code postal français (5 chiffres)
+- **Tests complets** (190 tests, 100% de couverture)
 - **Tests d'intégration** du formulaire React
 - **CI/CD automatisé** avec GitHub Actions
 - **Documentation technique** générée automatiquement
 - **Déploiement continu** sur GitHub Pages
+
+### Fonctionnalités avancées
+
+#### Validation d'unicité d'email
+
+- Détection des emails déjà enregistrés via localStorage
+- Comparaison case-insensitive (test@example.com = TEST@EXAMPLE.COM)
+- Message d'erreur explicite : "This email address is already registered"
+- Bouton submit désactivé en cas de doublon
+
+#### Détection d'autofill Chrome
+
+- Event listeners sur tous les champs pour capturer l'autocomplétion
+- Polling DOM à 100ms et 500ms pour détection initiale
+- Validation automatique des champs autofillés
+- Fonctionne sans interaction manuelle (pas besoin de cliquer/blur)
+- Gestion robuste des éléments DOM manquants
 
 ## Prérequis
 
@@ -104,7 +123,7 @@ Le projet utilise **Jest** et **React Testing Library** pour les tests unitaires
 - **Tests d'intégration** : Le formulaire React est testé avec des scénarios réels
 - **Couverture** : 100% des fonctions, branches et lignes
 
-📄 **[Plan de test complet (TEST_PLAN.md)](https://github.com/Galateee/Exercice-cours-test-unitaire/blob/main/TEST_PLAN.md)**
+**[Plan de test complet (TEST_PLAN.md)](https://github.com/Galateee/Exercice-cours-test-unitaire/blob/main/TEST_PLAN.md)**
 
 ### Exécution locale
 
@@ -227,8 +246,9 @@ Exercice-cours-test-unitaire/
 
 ### Frontend
 
-- **React** 19.2.4 - Framework UI
+- **React** 19.2.4 - Framework UI (avec hooks : useState, useMemo, useEffect)
 - **React DOM** 19.2.4 - Rendu React
+- **react-toastify** 11.0.3 - Notifications utilisateur
 
 ### Tests
 

@@ -17,8 +17,26 @@ Ce projet implémente un formulaire d'inscription utilisateur avec validation en
 - **Tests Unitaires (UT)** : Validation de la logique métier isolée (validators)
 - **Tests d'Intégration (IT)** : Validation de l'interface utilisateur et de l'intégration des composants
 
-**Total des tests** : 158 tests
+**Total des tests** : 190 tests
 **Couverture de code** : 100%
+
+### Évolutions récentes testées
+
+#### Validation d'unicité d'email (47 nouveaux tests)
+
+- `validateUniqueEmail()` : Vérifie qu'un email n'est pas déjà dans localStorage
+- `validateEmailComplete()` : Validation format + unicité combinée
+- Tests avec localStorage vide, null, invalide, ou peuplé
+- Comparaison case-insensitive (TEST@EXAMPLE.COM = test@example.com)
+- Integration dans UserForm avec feedback visuel
+
+#### Détection d'autofill Chrome (2 nouveaux tests + validation implicite)
+
+- Event listeners attachés sur chaque champ pour capturer l'autocomplétion
+- Polling DOM à 100ms et 500ms pour détecter l'autofill initial
+- Validation automatique sans interaction manuelle
+- Cleanup des event listeners au démontage du composant
+- Gestion robuste des éléments DOM manquants
 
 ---
 
@@ -48,7 +66,7 @@ Les tests unitaires se concentrent sur la validation des règles métier de mani
 - **Date de référence custom**
   - Permet de spécifier une date de référence pour les calculs
 
-### 2. emailValidator.test.js (26 tests)
+### 2. emailValidator.test.js (179 tests)
 
 #### Scénarios couverts :
 
@@ -69,6 +87,12 @@ Les tests unitaires se concentrent sur la validation des règles métier de mani
   - Rejette emails trop longs (> 254 caractères)
 - **Sécurité**
   - Détecte tentatives XSS
+- **Validation d'unicité (47 tests)**
+  - Rejette emails déjà enregistrés dans localStorage
+  - Accepte nouveaux emails
+  - Gère localStorage vide/null/invalide
+  - Comparaison case-insensitive (test@example.com = TEST@EXAMPLE.COM)
+  - validateEmailComplete : format + unicité simultanée
 
 ### 3. identityValidator.test.js (36 tests)
 
@@ -133,66 +157,76 @@ Les tests unitaires se concentrent sur la validation des règles métier de mani
 
 Les tests d'intégration valident l'interaction entre l'UI et la logique métier, simulant le comportement d'un utilisateur réel.
 
-### UserForm.test.jsx (20 tests)
+### UserForm.test.jsx (44 tests)
 
-#### 1. Rendu et Structure du Formulaire
+#### 1. Rendu et Structure du Formulaire (2 tests)
 
 - Affiche tous les champs requis avec leurs labels
 - Bouton submit désactivé initialement
 
-#### 2. Validation en Temps Réel (Feedback immédiat)
+#### 2. Validation en Temps Réel (8 tests)
 
 - Affiche erreur pour firstName invalide (après blur)
 - Affiche erreur pour lastName avec chiffres
 - Affiche erreur pour email invalide
 - Affiche erreur pour utilisateur mineur (< 18 ans)
 - Affiche erreur pour code postal invalide
+- Affiche erreur pour city invalide
+- Affiche erreur pour date de naissance future
+- Validation birthDate avec format requis
 
-#### 3. Comportement Utilisateur "Chaotique"
+#### 3. Comportement Utilisateur (5 tests)
 
 - Gère corrections multiples : saisies invalides → corrections → re-saisies
   - Teste firstName : invalide → corrigé
   - Teste email : invalide → corrigé
   - Teste postalCode : lettres → chiffres valides
   - Vérifie que le bouton reste désactivé tant que formulaire incomplet
-
-#### 4. Activation du Bouton Submit
-
 - Active le bouton quand tous les champs sont valides
 
-#### 5. Soumission du Formulaire
+#### 4. Soumission du Formulaire (4 tests)
 
 - Sauvegarde dans localStorage avec timestamp
-- Vérifie structure des données sauvegardées
+- Vérifie structure des données sauvegardées (firstName, lastName, email, age, postalCode, city, timestamp)
 - Affiche toast de succès avec paramètres corrects
 - Vide tous les champs après soumission
 - Désactive à nouveau le bouton après reset
+- Ne soumet pas le formulaire si données invalides
 
-#### 6. Sécurité XSS
+#### 5. Validation d'Unicité Email (3 tests)
 
-- Détecte et bloque tentatives XSS dans firstName
+- Détecte email déjà enregistré dans localStorage
+- Affiche erreur "This email address is already registered"
+- Désactive le bouton si email en doublon
 
-#### 7. Correction d'Erreurs
-
-- Messages d'erreur disparaissent lors de la correction
-- Peut afficher plusieurs erreurs simultanément
-
-#### 8. Formulaires Partiels
-
-- Bouton reste désactivé avec formulaire partiellement rempli
-
-#### 9. Edge Cases Spécifiques
+#### 6. Edge Cases Spécifiques (9 tests)
 
 - Accepte utilisateur de exactement 18 ans
-- Validation en temps réel après premier touch du champ
-- Rejette dates de naissance futures
 - Accepte codes postaux commençant par 0
 - Rejette villes avec chiffres ou caractères spéciaux
 - Rejette âges irréalistes (> 150 ans)
+- Calcul d'âge précis (compte mois et jour, pas seulement année)
+- Détecte tentatives XSS dans firstName
+- Validation en temps réel après premier touch du champ
+- Messages d'erreur disparaissent lors de la correction
+- Formulaire partiellement rempli garde le bouton désactivé
 
-#### 10. Validation Négative
+#### 7. Validation des Branches (2 tests)
 
-- Ne soumet pas le formulaire si données invalides (branche else du handleSubmit)
+- Soumet le formulaire avec email invalide (tous champs remplis)
+- Soumet le formulaire avec code postal invalide (tous champs remplis)
+
+#### 8. Optimisations React (2 tests)
+
+- Cleanup des event listeners au démontage du composant
+- Gestion robuste des éléments DOM manquants lors du setup des listeners
+
+#### 9. Détection Autofill Chrome (tests implicites)
+
+- Event listeners pour capturer l'autocomplétion Chrome
+- Validation automatique des champs autofillés
+- Détection en temps réel des valeurs autofillées
+- Polling DOM à 100ms et 500ms pour autofill initial
 
 ---
 
@@ -222,22 +256,25 @@ All files                |     100 |      100 |     100 |     100 |
 
 ### Répartition des Responsabilités
 
-#### Tests Unitaires (UT) - 138 tests
+#### Tests Unitaires (UT) - 146 tests
 
 **Objectif** : Valider la logique métier de manière isolée
 
 - **Validation des règles métier** : Formats, longueurs, types
+- **Validation d'unicité** : Détection des emails en doublon via localStorage
 - **Edge cases métier** : Dates limites, années bissextiles, caractères Unicode
-- **Sécurité** : XSS, injections
-- **Gestion d'erreurs** : Messages explicites, codes d'erreur
+- **Sécurité** : XSS, injections, validation stricte
+- **Gestion d'erreurs** : Messages explicites, codes d'erreur spécifiques
 - **Indépendance** : Pas de dépendance UI, rapides à exécuter
 
-#### Tests d'Intégration (IT) - 20 tests
+#### Tests d'Intégration (IT) - 44 tests
 
 **Objectif** : Valider l'intégration UI + logique métier
 
-- **Interaction utilisateur** : Saisie clavier, focus, blur, click
-- **Feedback visuel** : Affichage des erreurs, états du bouton
+- **Interaction utilisateur** : Saisie clavier, focus, blur, click, autofill
+- **Feedback visuel** : Affichage des erreurs, états du bouton, styles CSS
 - **Flux complets** : Formulaire invalide → corrections → soumission
-- **Intégrations externes** : localStorage, react-toastify
-- **Accessibilité** : Rôles ARIA, labels
+- **Intégrations externes** : localStorage (lecture/écriture), react-toastify
+- **Optimisations React** : useMemo, event listeners cleanup, DOM polling
+- **Détection autofill** : Event listeners, polling DOM, validation instantanée
+- **Accessibilité** : Rôles ARIA, labels, navigation clavier
