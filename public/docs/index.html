@@ -60,6 +60,7 @@
 <li><a href="#installation">Installation</a></li>
 <li><a href="#scripts-disponibles">Scripts disponibles</a></li>
 <li><a href="#tests">Tests</a></li>
+<li><a href="#tests-e2e-cypress">Tests E2E (Cypress)</a></li>
 <li><a href="#documentation">Documentation</a></li>
 <li><a href="#cicd">CI/CD</a></li>
 <li><a href="#structure-du-projet">Structure du projet</a></li>
@@ -68,19 +69,39 @@
 <h2>Fonctionnalités</h2>
 <ul>
 <li><strong>Validation de formulaire utilisateur</strong> avec feedback en temps réel</li>
+<li><strong>Validation d'unicité d'email</strong> avec localStorage (détection des doublons)</li>
+<li><strong>Détection automatique de l'autofill Chrome</strong> avec validation instantanée</li>
 <li><strong>Validateurs modulaires</strong> pour :
 <ul>
-<li>Email (format RFC 5322)</li>
-<li>Âge (18-120 ans)</li>
+<li>Email (format RFC 5322 + unicité)</li>
+<li>Âge (18-120 ans avec calcul précis)</li>
 <li>Nom et prénom (format français)</li>
-<li>Code postal français</li>
+<li>Code postal français (5 chiffres)</li>
 </ul>
 </li>
-<li><strong>Tests unitaires complets</strong> (100% de couverture)</li>
-<li><strong>Tests d'intégration</strong> du formulaire React</li>
+<li><strong>Navigation SPA</strong> avec React Router (pages Accueil + Inscription)</li>
+<li><strong>Gestion d'état partagé</strong> via Context React pour persistance des données</li>
+<li><strong>Tests complets</strong> (221 tests unitaires/intégration + 11 tests E2E, 100% de couverture)</li>
+<li><strong>Tests End-to-End</strong> avec Cypress (scénarios de navigation complexes)</li>
 <li><strong>CI/CD automatisé</strong> avec GitHub Actions</li>
 <li><strong>Documentation technique</strong> générée automatiquement</li>
 <li><strong>Déploiement continu</strong> sur GitHub Pages</li>
+</ul>
+<h3>Fonctionnalités avancées</h3>
+<h4>Validation d'unicité d'email</h4>
+<ul>
+<li>Détection des emails déjà enregistrés via localStorage</li>
+<li>Comparaison case-insensitive (test@example.com = TEST@EXAMPLE.COM)</li>
+<li>Message d'erreur explicite : &quot;This email address is already registered&quot;</li>
+<li>Bouton submit désactivé en cas de doublon</li>
+</ul>
+<h4>Détection d'autofill Chrome</h4>
+<ul>
+<li>Event listeners sur tous les champs pour capturer l'autocomplétion</li>
+<li>Polling DOM à 100ms et 500ms pour détection initiale</li>
+<li>Validation automatique des champs autofillés</li>
+<li>Fonctionne sans interaction manuelle (pas besoin de cliquer/blur)</li>
+<li>Gestion robuste des éléments DOM manquants</li>
 </ul>
 <h2>Prérequis</h2>
 <ul>
@@ -128,10 +149,11 @@ npm run jsdoc
 <h3>Couverture des tests</h3>
 <ul>
 <li><strong>Tests unitaires</strong> : Tous les validateurs sont testés individuellement</li>
-<li><strong>Tests d'intégration</strong> : Le formulaire React est testé avec des scénarios réels</li>
-<li><strong>Couverture</strong> : 100% des fonctions, branches et lignes</li>
+<li><strong>Tests d'intégration</strong> : Le formulaire React et les pages sont testés avec des scénarios réels</li>
+<li><strong>Tests E2E (Cypress)</strong> : 11 tests de navigation et parcours utilisateur complets</li>
+<li><strong>Couverture</strong> : 100% des fonctions, branches et lignes (221 tests)</li>
 </ul>
-<p>📄 <strong><a href="https://github.com/Galateee/Exercice-cours-test-unitaire/blob/main/TEST_PLAN.md">Plan de test complet (TEST_PLAN.md)</a></strong></p>
+<p><strong><a href="https://github.com/Galateee/Exercice-cours-test-unitaire/blob/main/TEST_PLAN.md">Plan de test complet (TEST_PLAN.md)</a></strong></p>
 <h3>Exécution locale</h3>
 <pre class="prettyprint source lang-bash"><code># Tests interactifs
 npm test
@@ -152,6 +174,50 @@ npm run test:coverage
   });
 });
 </code></pre>
+<h2>Tests E2E (Cypress)</h2>
+<p>Le projet implémente des tests End-to-End avec <strong>Cypress</strong> pour valider les parcours utilisateurs complets à travers l'application multi-pages.</p>
+<h3>Architecture testée</h3>
+<ul>
+<li><strong>Navigation SPA</strong> avec React Router</li>
+<li><strong>État partagé</strong> via Context React (UserContext)</li>
+<li><strong>Persistance des données</strong> entre les pages</li>
+<li><strong>Scénarios de navigation</strong> complexes</li>
+</ul>
+<h3>Scénarios E2E implémentés</h3>
+<h4>Scénario Nominal</h4>
+<ol>
+<li>Navigation vers l'Accueil (/) → Vérification &quot;0 utilisateur inscrit&quot; et liste vide</li>
+<li>Navigation vers le Formulaire (/register)</li>
+<li>Ajout d'un nouvel utilisateur valide (Jean Dupont)</li>
+<li>Redirection automatique vers l'Accueil</li>
+<li>Vérification &quot;1 utilisateur inscrit&quot; ET présence du nouvel utilisateur dans la liste</li>
+</ol>
+<h4>Scénario d'Erreur</h4>
+<ol>
+<li>Partant de l'état précédent (1 inscrit)</li>
+<li>Navigation vers le Formulaire</li>
+<li>Tentative d'ajout invalide (email doublon ou champs vides)</li>
+<li>Vérification de l'erreur affichée</li>
+<li>Retour vers l'Accueil</li>
+<li>Vérification &quot;Toujours 1 utilisateur inscrit&quot; et liste inchangée</li>
+</ol>
+<h3>Exécution locale</h3>
+<pre class="prettyprint source lang-bash"><code># Mode interactif (interface graphique Cypress)
+npm run cypress
+
+# Mode headless (ligne de commande)
+npm run cypress:run
+# ou
+npx cypress run
+</code></pre>
+<h3>Sélecteurs robustes</h3>
+<p>Tous les éléments testés utilisent des attributs <code>data-cy</code> pour garantir la stabilité des tests :</p>
+<pre class="prettyprint source lang-javascript"><code>cy.get(&quot;[data-cy='home-page']&quot;);
+cy.get(&quot;[data-cy='user-count']&quot;);
+cy.get(&quot;[data-cy='input-email']&quot;);
+</code></pre>
+<h3>Intégration CI/CD</h3>
+<p>Les tests Cypress s'exécutent automatiquement dans le pipeline GitHub Actions en mode headless après les tests unitaires.</p>
 <h2>Documentation</h2>
 <p>La documentation technique est générée automatiquement avec <strong>JSDoc</strong> et déployée avec l'application.</p>
 <h3>Accès à la documentation</h3>
@@ -233,14 +299,17 @@ Job 2: deploy_pages
 <h2>Technologies utilisées</h2>
 <h3>Frontend</h3>
 <ul>
-<li><strong>React</strong> 19.2.4 - Framework UI</li>
+<li><strong>React</strong> 19.2.4 - Framework UI (avec hooks : useState, useMemo, useEffect)</li>
 <li><strong>React DOM</strong> 19.2.4 - Rendu React</li>
+<li><strong>React Router DOM</strong> 7.13.0 - Navigation SPA</li>
+<li><strong>react-toastify</strong> 11.0.3 - Notifications utilisateur</li>
 </ul>
 <h3>Tests</h3>
 <ul>
 <li><strong>Jest</strong> 27.5.1 - Framework de test</li>
 <li><strong>React Testing Library</strong> 16.3.2 - Tests de composants React</li>
 <li><strong>@testing-library/user-event</strong> 14.6.1 - Simulation d'interactions utilisateur</li>
+<li><strong>Cypress</strong> 15.10.0 - Tests End-to-End</li>
 </ul>
 <h3>Outils de développement</h3>
 <ul>
@@ -286,6 +355,14 @@ Job 2: deploy_pages
 <td><code>npm run test:coverage</code></td>
 <td>Tests avec rapport de couverture détaillé</td>
 </tr>
+<tr>
+<td><code>npm run cypress</code></td>
+<td>Ouvre l'interface graphique Cypress</td>
+</tr>
+<tr>
+<td><code>npm run cypress:run</code></td>
+<td>Exécute les tests E2E en mode headless</td>
+</tr>
 </tbody>
 </table>
 <h2>Objectifs pédagogiques</h2>
@@ -293,9 +370,11 @@ Job 2: deploy_pages
 <ol>
 <li><strong>Tests unitaires</strong> - Validation de fonctions isolées</li>
 <li><strong>Tests d'intégration</strong> - Validation de composants React</li>
+<li><strong>Tests E2E</strong> - Tests de navigation et parcours utilisateur avec Cypress</li>
+<li><strong>Architecture SPA</strong> - Navigation multi-pages avec React Router et Context API</li>
 <li><strong>TDD</strong> - Test-Driven Development</li>
-<li><strong>Couverture de code</strong> - 100% de couverture</li>
-<li><strong>CI/CD</strong> - Pipeline automatisé complet</li>
+<li><strong>Couverture de code</strong> - 100% de couverture (221 UT/IT + 11 E2E)</li>
+<li><strong>CI/CD</strong> - Pipeline automatisé complet avec tests E2E</li>
 <li><strong>Documentation</strong> - Génération automatique avec JSDoc</li>
 <li><strong>Déploiement continu</strong> - GitHub Pages</li>
 </ol>
@@ -316,13 +395,13 @@ Job 2: deploy_pages
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-validators.html">validators</a></li></ul><h3>Classes</h3><ul><li><a href="ValidationError.html">ValidationError</a></li></ul><h3>Global</h3><ul><li><a href="global.html#UserForm">UserForm</a></li><li><a href="global.html#validateAge">validateAge</a></li><li><a href="global.html#validateEmail">validateEmail</a></li><li><a href="global.html#validateEmailComplete">validateEmailComplete</a></li><li><a href="global.html#validateIdentity">validateIdentity</a></li><li><a href="global.html#validatePostalCode">validatePostalCode</a></li><li><a href="global.html#validateUniqueEmail">validateUniqueEmail</a></li><li><a href="global.html#validateUser">validateUser</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-validators.html">validators</a></li></ul><h3>Classes</h3><ul><li><a href="ValidationError.html">ValidationError</a></li></ul><h3>Global</h3><ul><li><a href="global.html#Home">Home</a></li><li><a href="global.html#INITIAL_ERRORS">INITIAL_ERRORS</a></li><li><a href="global.html#INITIAL_FORM_DATA">INITIAL_FORM_DATA</a></li><li><a href="global.html#INITIAL_TOUCHED">INITIAL_TOUCHED</a></li><li><a href="global.html#Register">Register</a></li><li><a href="global.html#TOAST_CONFIG">TOAST_CONFIG</a></li><li><a href="global.html#UserForm">UserForm</a></li><li><a href="global.html#UserProvider">UserProvider</a></li><li><a href="global.html#useUsers">useUsers</a></li><li><a href="global.html#validateAge">validateAge</a></li><li><a href="global.html#validateEmail">validateEmail</a></li><li><a href="global.html#validateEmailComplete">validateEmailComplete</a></li><li><a href="global.html#validateIdentity">validateIdentity</a></li><li><a href="global.html#validatePostalCode">validatePostalCode</a></li><li><a href="global.html#validateUniqueEmail">validateUniqueEmail</a></li><li><a href="global.html#validateUser">validateUser</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Thu Feb 19 2026 13:50:12 GMT+0100 (heure normale d’Europe centrale)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Thu Feb 19 2026 18:39:11 GMT+0100 (heure normale d’Europe centrale)
 </footer>
 
 <script> prettyPrint(); </script>

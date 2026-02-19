@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Source: validators/postalCodeValidator.js</title>
+    <title>JSDoc: Source: pages/Register.jsx</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Source: validators/postalCodeValidator.js</h1>
+    <h1 class="page-title">Source: pages/Register.jsx</h1>
 
     
 
@@ -26,33 +26,44 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>import ValidationError from "./ValidationError";
+            <pre class="prettyprint source linenums"><code>import { useNavigate } from "react-router-dom";
+import UserForm from "../components/UserForm";
+import { useUsers } from "../contexts/UserContext";
+import "./Register.css";
 
 /**
- * Validates that a postal code follows the French format (exactly 5 digits).
+ * Register page component that wraps the UserForm
+ * Handles successful registration by adding user to context and navigating to home
  *
- * @function validatePostalCode
- * @param {string} postalCode - The postal code to validate
- * @throws {ValidationError} Throws an exception with a specific error code if validation fails
- * @returns {void}
+ * @component
+ * @returns {JSX.Element} Register page with form
  */
-function validatePostalCode(postalCode) {
-  if (postalCode === undefined || postalCode === null || postalCode === "") {
-    throw new ValidationError("Postal code is required", "MISSING_POSTAL_CODE");
-  }
+function Register() {
+  const navigate = useNavigate();
+  const { addUser } = useUsers();
 
-  if (typeof postalCode !== "string") {
-    throw new ValidationError("Postal code must be a string", "INVALID_POSTAL_CODE_TYPE");
-  }
+  /**
+   * Handle successful form submission
+   * @param {Object} userData - User data from the form
+   */
+  const handleUserRegistered = (userData) => {
+    addUser(userData);
+    navigate("/", { state: { newUserEmail: userData.email } });
+  };
 
-  const postalCodeRegex = /^[0-9]{5}$/;
-
-  if (!postalCodeRegex.test(postalCode)) {
-    throw new ValidationError("Postal code must be exactly 5 digits with no spaces or special characters", "INVALID_POSTAL_CODE_FORMAT");
-  }
+  return (
+    &lt;div className="register-page" data-cy="register-page">
+      &lt;UserForm onUserRegistered={handleUserRegistered} />
+      &lt;div className="back-link">
+        &lt;button onClick={() => navigate("/")} className="back-button" data-cy="back-to-home-button">
+          ← Back to Home
+        &lt;/button>
+      &lt;/div>
+    &lt;/div>
+  );
 }
 
-export default validatePostalCode;
+export default Register;
 </code></pre>
         </article>
     </section>

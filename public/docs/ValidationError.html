@@ -28,9 +28,7 @@
 
 <header>
     
-        <h2><span class="attribs"><span class="type-signature"></span></span>ValidationError<span class="signature">()</span><span class="type-signature"></span></h2>
-        
-            <div class="class-description"><p>Custom error class for validation errors</p></div>
+        <h2><span class="attribs"><span class="type-signature"></span></span>ValidationError<span class="signature">(message, code)</span><span class="type-signature"></span></h2>
         
     
 </header>
@@ -41,25 +39,199 @@
         
 
     
-    <h2>Constructor</h2>
+
+    
+    <h4 class="name" id="ValidationError"><span class="type-signature"></span>new ValidationError<span class="signature">(message, code)</span><span class="type-signature"></span></h4>
     
 
     
-    <h4 class="name" id="ValidationError"><span class="type-signature"></span>new ValidationError<span class="signature">()</span><span class="type-signature"></span></h4>
+
+
+
+<div class="description">
+    <p>Custom error class for validation errors
+Extends the native Error class with an additional error code property</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
     
 
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
     
 
+        <tr>
+            
+                <td class="name"><code>message</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Human-readable error message describing the validation failure</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>code</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Machine-readable error code for programmatic error handling
+(e.g., INVALID_EMAIL_FORMAT, MISSING_DATE, AGE_TOO_YOUNG)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
 
 
 
 
 
 
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>name</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
 
 
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Always set to &quot;ValidationError&quot;</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>code</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
 
 
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The error code provided during construction</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>message</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The error message provided during construction</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
 
 
 
@@ -93,7 +265,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="validators_ValidationError.js.html">validators/ValidationError.js</a>, <a href="validators_ValidationError.js.html#line4">line 4</a>
+        <a href="validators_ValidationError.js.html">validators/ValidationError.js</a>, <a href="validators_ValidationError.js.html#line1">line 1</a>
     </li></ul></dd>
     
 
@@ -122,9 +294,27 @@
 
 
 
+    <h5>Examples</h5>
+    
+    <pre class="prettyprint"><code>// Throw a validation error with codethrow new ValidationError("Email address must be in a valid format", "INVALID_EMAIL_FORMAT");</code></pre>
+
+    <pre class="prettyprint"><code>// Catch and handle validation errortry {  validateEmail("invalid-email");} catch (error) {  if (error instanceof ValidationError) {    console.log(error.code); // "INVALID_EMAIL_FORMAT"    console.log(error.message); // "Email address must be in a valid format"  }}</code></pre>
+
+
 
     
     </div>
+
+    
+        <h3 class="subsection-title">Extends</h3>
+
+        
+
+
+    <ul>
+        <li>Error</li>
+    </ul>
+
 
     
 
@@ -155,13 +345,13 @@
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-validators.html">validators</a></li></ul><h3>Classes</h3><ul><li><a href="ValidationError.html">ValidationError</a></li></ul><h3>Global</h3><ul><li><a href="global.html#UserForm">UserForm</a></li><li><a href="global.html#validateAge">validateAge</a></li><li><a href="global.html#validateEmail">validateEmail</a></li><li><a href="global.html#validateEmailComplete">validateEmailComplete</a></li><li><a href="global.html#validateIdentity">validateIdentity</a></li><li><a href="global.html#validatePostalCode">validatePostalCode</a></li><li><a href="global.html#validateUniqueEmail">validateUniqueEmail</a></li><li><a href="global.html#validateUser">validateUser</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-validators.html">validators</a></li></ul><h3>Classes</h3><ul><li><a href="ValidationError.html">ValidationError</a></li></ul><h3>Global</h3><ul><li><a href="global.html#Home">Home</a></li><li><a href="global.html#INITIAL_ERRORS">INITIAL_ERRORS</a></li><li><a href="global.html#INITIAL_FORM_DATA">INITIAL_FORM_DATA</a></li><li><a href="global.html#INITIAL_TOUCHED">INITIAL_TOUCHED</a></li><li><a href="global.html#Register">Register</a></li><li><a href="global.html#TOAST_CONFIG">TOAST_CONFIG</a></li><li><a href="global.html#UserForm">UserForm</a></li><li><a href="global.html#UserProvider">UserProvider</a></li><li><a href="global.html#useUsers">useUsers</a></li><li><a href="global.html#validateAge">validateAge</a></li><li><a href="global.html#validateEmail">validateEmail</a></li><li><a href="global.html#validateEmailComplete">validateEmailComplete</a></li><li><a href="global.html#validateIdentity">validateIdentity</a></li><li><a href="global.html#validatePostalCode">validatePostalCode</a></li><li><a href="global.html#validateUniqueEmail">validateUniqueEmail</a></li><li><a href="global.html#validateUser">validateUser</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Thu Feb 19 2026 13:50:12 GMT+0100 (heure normale d’Europe centrale)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Thu Feb 19 2026 18:39:11 GMT+0100 (heure normale d’Europe centrale)
 </footer>
 
 <script> prettyPrint(); </script>

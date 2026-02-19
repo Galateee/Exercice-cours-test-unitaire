@@ -8,8 +8,16 @@ import "./Home.css";
 /**
  * Home component that displays the list of registered users
  *
+ * Features:
+ * - Displays user count and list of all registered users
+ * - Shows success toast notification when redirected after registration
+ * - Highlights newly registered user row for 3 seconds
+ * - Provides navigation to registration page
+ * - Shows empty state when no users exist
+ * - Sorts users by registration date (newest first)
+ *
  * @component
- * @returns {JSX.Element} Home page with user list
+ * @returns {JSX.Element} Home page with user list, statistics, and navigation
  */
 function Home() {
   const { users } = useUsers();
