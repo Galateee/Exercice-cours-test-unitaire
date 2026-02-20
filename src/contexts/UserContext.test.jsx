@@ -1,15 +1,20 @@
 import { render, screen, waitFor, act } from "@testing-library/react";
 import { UserProvider, useUsers } from "./UserContext";
+import apiService from "../services/api";
+
+jest.mock("../services/api");
 
 /**
  * Test component that uses UserContext
  */
 function TestComponent() {
-  const { users, addUser, refreshUsers } = useUsers();
+  const { users, addUser, refreshUsers, loading, error } = useUsers();
 
   return (
     <div>
       <div data-testid="user-count">{users.length}</div>
+      <div data-testid="loading">{loading ? "Loading..." : "Not loading"}</div>
+      <div data-testid="error">{error || "No error"}</div>
       <button
         onClick={() =>
           addUser({
@@ -36,25 +41,32 @@ function TestComponent() {
 
 /**
  * UserContext Tests
- * Tests for the global user state management
+ * Tests for the global user state management with API integration
  */
 describe("UserContext", () => {
   beforeEach(() => {
-    localStorage.clear();
     jest.clearAllMocks();
+    apiService.getUsers.mockResolvedValue([]);
   });
 
-  test("provides initial empty users array", () => {
+  test("provides initial empty users array when API returns empty", async () => {
+    apiService.getUsers.mockResolvedValue([]);
+
     render(
       <UserProvider>
         <TestComponent />
       </UserProvider>,
     );
 
+    await waitFor(() => {
+      expect(screen.getByTestId("loading")).toHaveTextContent("Not loading");
+    });
+
     expect(screen.getByTestId("user-count")).toHaveTextContent("0");
+    expect(apiService.getUsers).toHaveBeenCalledTimes(1);
   });
 
-  test("loads users from localStorage on mount", () => {
+  test("loads users from API on mount", async () => {
     const mockUsers = [
       {
         firstName: "John",
@@ -67,7 +79,7 @@ describe("UserContext", () => {
       },
     ];
 
-    localStorage.setItem("registeredUsers", JSON.stringify(mockUsers));
+    apiService.getUsers.mockResolvedValue(mockUsers);
 
     render(
       <UserProvider>
@@ -75,16 +87,38 @@ describe("UserContext", () => {
       </UserProvider>,
     );
 
-    expect(screen.getByTestId("user-count")).toHaveTextContent("1");
+    await waitFor(() => {
+      expect(screen.getByTestId("user-count")).toHaveTextContent("1");
+    });
+
     expect(screen.getByText("john@example.com")).toBeInTheDocument();
+    expect(apiService.getUsers).toHaveBeenCalledTimes(1);
   });
 
-  test("addUser adds a new user and saves to localStorage", async () => {
+  test("addUser creates a new user via API", async () => {
+    const newUser = {
+      firstName: "Test",
+      lastName: "User",
+      email: "test@example.com",
+      age: 25,
+      postalCode: "75001",
+      city: "Paris",
+      timestamp: expect.any(String),
+    };
+
+    const createdUser = { ...newUser, id: 101 };
+    apiService.getUsers.mockResolvedValue([]);
+    apiService.createUser.mockResolvedValue(createdUser);
+
     render(
       <UserProvider>
         <TestComponent />
       </UserProvider>,
     );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("loading")).toHaveTextContent("Not loading");
+    });
 
     const addButton = screen.getByText("Add User");
     await act(async () => {
@@ -96,20 +130,27 @@ describe("UserContext", () => {
     });
 
     expect(screen.getByText("test@example.com")).toBeInTheDocument();
-
-    const storedUsers = JSON.parse(localStorage.getItem("registeredUsers"));
-    expect(storedUsers).toHaveLength(1);
-    expect(storedUsers[0].email).toBe("test@example.com");
+    expect(apiService.createUser).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: "test@example.com",
+        firstName: "Test",
+        lastName: "User",
+      }),
+    );
   });
 
-  test("refreshUsers reloads data from localStorage", async () => {
+  test("refreshUsers reloads data from API", async () => {
+    apiService.getUsers.mockResolvedValueOnce([]);
+
     render(
       <UserProvider>
         <TestComponent />
       </UserProvider>,
     );
 
-    expect(screen.getByTestId("user-count")).toHaveTextContent("0");
+    await waitFor(() => {
+      expect(screen.getByTestId("user-count")).toHaveTextContent("0");
+    });
 
     const newUser = {
       firstName: "External",
@@ -120,7 +161,7 @@ describe("UserContext", () => {
       city: "Lyon",
       timestamp: new Date().toISOString(),
     };
-    localStorage.setItem("registeredUsers", JSON.stringify([newUser]));
+    apiService.getUsers.mockResolvedValueOnce([newUser]);
 
     const refreshButton = screen.getByText("Refresh Users");
     await act(async () => {
@@ -132,12 +173,13 @@ describe("UserContext", () => {
     });
 
     expect(screen.getByText("external@example.com")).toBeInTheDocument();
+    expect(apiService.getUsers).toHaveBeenCalledTimes(2);
   });
 
-  test("handles corrupted localStorage data gracefully", () => {
+  test("handles API errors gracefully", async () => {
     const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
-
-    localStorage.setItem("registeredUsers", "invalid-json");
+    const apiError = new Error("Network Error");
+    apiService.getUsers.mockRejectedValue(apiError);
 
     render(
       <UserProvider>
@@ -145,14 +187,19 @@ describe("UserContext", () => {
       </UserProvider>,
     );
 
+    await waitFor(() => {
+      expect(screen.getByTestId("loading")).toHaveTextContent("Not loading");
+    });
+
     expect(screen.getByTestId("user-count")).toHaveTextContent("0");
-    expect(consoleError).toHaveBeenCalledWith("Error loading users from localStorage:", expect.any(Error));
+    expect(screen.getByTestId("error")).not.toHaveTextContent("No error");
+    expect(consoleError).toHaveBeenCalledWith("Error loading users from API:", apiError);
 
     consoleError.mockRestore();
   });
 
-  test("handles missing localStorage data", () => {
-    localStorage.removeItem("registeredUsers");
+  test("handles missing API data (empty response)", async () => {
+    apiService.getUsers.mockResolvedValue([]);
 
     render(
       <UserProvider>
@@ -160,7 +207,12 @@ describe("UserContext", () => {
       </UserProvider>,
     );
 
+    await waitFor(() => {
+      expect(screen.getByTestId("loading")).toHaveTextContent("Not loading");
+    });
+
     expect(screen.getByTestId("user-count")).toHaveTextContent("0");
+    expect(screen.getByTestId("error")).toHaveTextContent("No error");
   });
 
   test("throws error when useUsers is used outside UserProvider", () => {
@@ -178,26 +230,18 @@ describe("UserContext", () => {
     consoleError.mockRestore();
   });
 
-  test("addUser updates users state correctly with multiple users", async () => {
-    render(
-      <UserProvider>
-        <TestComponent />
-      </UserProvider>,
-    );
+  test("addUser and refresh work together correctly", async () => {
+    const firstUser = {
+      firstName: "Test",
+      lastName: "User",
+      email: "test@example.com",
+      age: 25,
+      postalCode: "75001",
+      city: "Paris",
+      timestamp: expect.any(String),
+    };
 
-    const addButton = screen.getByText("Add User");
-
-    await act(async () => {
-      addButton.click();
-    });
-    await waitFor(() => {
-      expect(screen.getByTestId("user-count")).toHaveTextContent("1");
-    });
-
-    const storedUsers = JSON.parse(localStorage.getItem("registeredUsers"));
-    expect(storedUsers).toHaveLength(1);
-
-    storedUsers.push({
+    const secondUser = {
       firstName: "Second",
       lastName: "User",
       email: "second@example.com",
@@ -205,8 +249,33 @@ describe("UserContext", () => {
       postalCode: "69001",
       city: "Lyon",
       timestamp: new Date().toISOString(),
+    };
+
+    apiService.getUsers.mockResolvedValueOnce([]);
+    apiService.createUser.mockResolvedValue({ ...firstUser, id: 101 });
+    apiService.getUsers.mockResolvedValueOnce([
+      { ...firstUser, id: 101 },
+      { ...secondUser, id: 102 },
+    ]);
+
+    render(
+      <UserProvider>
+        <TestComponent />
+      </UserProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("user-count")).toHaveTextContent("0");
     });
-    localStorage.setItem("registeredUsers", JSON.stringify(storedUsers));
+
+    const addButton = screen.getByText("Add User");
+    await act(async () => {
+      addButton.click();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("user-count")).toHaveTextContent("1");
+    });
 
     const refreshButton = screen.getByText("Refresh Users");
     await act(async () => {
@@ -216,5 +285,8 @@ describe("UserContext", () => {
     await waitFor(() => {
       expect(screen.getByTestId("user-count")).toHaveTextContent("2");
     });
+
+    expect(screen.getByText("test@example.com")).toBeInTheDocument();
+    expect(screen.getByText("second@example.com")).toBeInTheDocument();
   });
 });

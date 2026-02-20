@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import apiService from "../services/api";
 
 /**
  * @typedef {Object} User
@@ -14,8 +15,10 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 /**
  * @typedef {Object} UserContextValue
  * @property {User[]} users - Array of registered users
- * @property {function(User): void} addUser - Function to add a new user
- * @property {function(): void} refreshUsers - Function to refresh users from localStorage
+ * @property {function(User): Promise<void>} addUser - Function to add a new user (async)
+ * @property {function(): Promise<void>} refreshUsers - Function to refresh users from API (async)
+ * @property {boolean} loading - Loading state for API operations
+ * @property {string|null} error - Error message if API call fails
  */
 
 const UserContext = createContext(undefined);
@@ -30,37 +33,55 @@ const UserContext = createContext(undefined);
  */
 export function UserProvider({ children }) {
   const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   /**
-   * Load users from localStorage
+   * Load users from API
    */
-  const loadUsers = () => {
+  const loadUsers = async () => {
     try {
-      const storedUsers = localStorage.getItem("registeredUsers");
-      const parsedUsers = storedUsers ? JSON.parse(storedUsers) : [];
-      setUsers(parsedUsers);
+      setLoading(true);
+      setError(null);
+      const fetchedUsers = await apiService.getUsers();
+      setUsers(fetchedUsers);
     } catch (error) {
-      console.error("Error loading users from localStorage:", error);
+      console.error("Error loading users from API:", error);
+      setError(error.message || "Failed to load users");
       setUsers([]);
+    } finally {
+      setLoading(false);
     }
   };
 
   /**
-   * Add a new user to the list and save to localStorage
+   * Add a new user via API
    *
    * @param {User} user - User object to add
+   * @returns {Promise<Object>} Created user object
+   * @throws {Error} If API call fails
    */
-  const addUser = (user) => {
-    const updatedUsers = [...users, user];
-    setUsers(updatedUsers);
-    localStorage.setItem("registeredUsers", JSON.stringify(updatedUsers));
+  const addUser = async (user) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const createdUser = await apiService.createUser(user);
+      setUsers((prevUsers) => [...prevUsers, createdUser]);
+      return createdUser;
+    } catch (error) {
+      console.error("Error creating user:", error);
+      setError(error.message || "Failed to create user");
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
   /**
-   * Refresh users from localStorage
+   * Refresh users from API
    */
-  const refreshUsers = () => {
-    loadUsers();
+  const refreshUsers = async () => {
+    await loadUsers();
   };
 
   useEffect(() => {
@@ -71,6 +92,8 @@ export function UserProvider({ children }) {
     users,
     addUser,
     refreshUsers,
+    loading,
+    error,
   };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

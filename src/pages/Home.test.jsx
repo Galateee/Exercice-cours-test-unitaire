@@ -3,6 +3,7 @@ import { MemoryRouter, __resetLocationState } from "react-router-dom";
 import Home from "./Home";
 import { UserProvider } from "../contexts/UserContext";
 import { toast } from "react-toastify";
+import apiService from "../services/api";
 
 jest.mock("react-toastify", () => ({
   ToastContainer: () => null,
@@ -10,6 +11,8 @@ jest.mock("react-toastify", () => ({
     success: jest.fn(),
   },
 }));
+
+jest.mock("../services/api");
 
 /**
  * Helper function to render Home component with required providers
@@ -30,42 +33,49 @@ const renderHome = (locationState = null) => {
  */
 describe("Home Component", () => {
   beforeEach(() => {
-    localStorage.clear();
     __resetLocationState();
     toast.success.mockClear();
+    jest.clearAllMocks();
+    apiService.getUsers.mockResolvedValue([]);
   });
 
-  test("renders home page heading", () => {
+  test("renders home page heading", async () => {
     renderHome();
-    const heading = screen.getByText(/Registered Users/i);
-    expect(heading).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/Registered Users/i)).toBeInTheDocument();
+    });
   });
 
-  test("renders total users count", () => {
+  test("renders total users count", async () => {
     renderHome();
-    const totalText = screen.getByText(/Total users:/i);
-    expect(totalText).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/Total users:/i)).toBeInTheDocument();
+    });
   });
 
-  test("renders Register New User button", () => {
+  test("renders Register New User button", async () => {
     renderHome();
-    const button = screen.getByText(/Register New User/i);
-    expect(button).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/Register New User/i)).toBeInTheDocument();
+    });
   });
 
-  test("displays empty state when no users", () => {
+  test("displays empty state when no users", async () => {
     renderHome();
-    const emptyMessage = screen.getByText(/No users registered yet/i);
-    expect(emptyMessage).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/No users registered yet/i)).toBeInTheDocument();
+    });
   });
 
-  test("displays user count as 0 when no users", () => {
+  test("displays user count as 0 when no users", async () => {
     renderHome();
-    const totalText = screen.getByText(/Total users:/i);
-    expect(totalText).toHaveTextContent("0");
+    await waitFor(() => {
+      const totalText = screen.getByText(/Total users:/i);
+      expect(totalText).toHaveTextContent("0");
+    });
   });
 
-  test("displays users list when users exist in localStorage", () => {
+  test("displays users list when users exist in API", async () => {
     const mockUsers = [
       {
         firstName: "John",
@@ -87,11 +97,13 @@ describe("Home Component", () => {
       },
     ];
 
-    localStorage.setItem("registeredUsers", JSON.stringify(mockUsers));
+    apiService.getUsers.mockResolvedValue(mockUsers);
 
     renderHome();
 
-    expect(screen.getByText(/Total users:/i)).toHaveTextContent("2");
+    await waitFor(() => {
+      expect(screen.getByText(/Total users:/i)).toHaveTextContent("2");
+    });
 
     expect(screen.getByText("John")).toBeInTheDocument();
     expect(screen.getByText("Doe")).toBeInTheDocument();
@@ -106,7 +118,7 @@ describe("Home Component", () => {
     expect(screen.getByText("69001")).toBeInTheDocument();
   });
 
-  test("does not display empty state when users exist", () => {
+  test("does not display empty state when users exist", async () => {
     const mockUsers = [
       {
         firstName: "Test",
@@ -119,14 +131,16 @@ describe("Home Component", () => {
       },
     ];
 
-    localStorage.setItem("registeredUsers", JSON.stringify(mockUsers));
+    apiService.getUsers.mockResolvedValue(mockUsers);
 
     renderHome();
 
-    expect(screen.queryByText(/No users registered yet/i)).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText(/No users registered yet/i)).not.toBeInTheDocument();
+    });
   });
 
-  test("renders table headers when users exist", () => {
+  test("renders table headers when users exist", async () => {
     const mockUsers = [
       {
         firstName: "Test",
@@ -139,11 +153,14 @@ describe("Home Component", () => {
       },
     ];
 
-    localStorage.setItem("registeredUsers", JSON.stringify(mockUsers));
+    apiService.getUsers.mockResolvedValue(mockUsers);
 
     renderHome();
 
-    expect(screen.getByText("First Name")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("First Name")).toBeInTheDocument();
+    });
+
     expect(screen.getByText("Last Name")).toBeInTheDocument();
     expect(screen.getByText("Email")).toBeInTheDocument();
     expect(screen.getByText("Age")).toBeInTheDocument();
@@ -152,7 +169,7 @@ describe("Home Component", () => {
     expect(screen.getByText("Registration Date")).toBeInTheDocument();
   });
 
-  test("formats registration date correctly", () => {
+  test("formats registration date correctly", async () => {
     const timestamp = new Date("2024-01-15T10:30:00Z");
     const mockUsers = [
       {
@@ -166,18 +183,22 @@ describe("Home Component", () => {
       },
     ];
 
-    localStorage.setItem("registeredUsers", JSON.stringify(mockUsers));
+    apiService.getUsers.mockResolvedValue(mockUsers);
 
     renderHome();
 
     const formattedDate = timestamp.toLocaleDateString();
-    expect(screen.getByText(formattedDate)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(formattedDate)).toBeInTheDocument();
+    });
   });
 
-  test("Register New User button links to /register", () => {
+  test("Register New User button links to /register", async () => {
     renderHome();
-    const link = screen.getByRole("link", { name: /Register New User/i });
-    expect(link).toHaveAttribute("href", "/register");
+    await waitFor(() => {
+      const link = screen.getByRole("link", { name: /Register New User/i });
+      expect(link).toHaveAttribute("href", "/register");
+    });
   });
 
   test("shows toast and highlights new user when redirected from registration", async () => {
@@ -195,7 +216,7 @@ describe("Home Component", () => {
       },
     ];
 
-    localStorage.setItem("registeredUsers", JSON.stringify(mockUsers));
+    apiService.getUsers.mockResolvedValue(mockUsers);
 
     renderHome({ newUserEmail: "john.doe@example.com" });
 
@@ -209,9 +230,11 @@ describe("Home Component", () => {
       );
     });
 
-    const rows = screen.getAllByRole("row");
-    const userRow = rows.find((row) => row.textContent.includes("john.doe@example.com"));
-    expect(userRow).toHaveClass("new-user-highlight");
+    await waitFor(() => {
+      const rows = screen.getAllByRole("row");
+      const userRow = rows.find((row) => row.textContent.includes("john.doe@example.com"));
+      expect(userRow).toHaveClass("new-user-highlight");
+    });
 
     await act(async () => {
       jest.advanceTimersByTime(3000);
