@@ -126,56 +126,196 @@ describe("Register Component", () => {
     });
   });
 
-  test.skip("displays error for duplicate email", async () => {
-    const existingUser = {
-      firstName: "Existing",
-      lastName: "User",
-      email: "existing@example.com",
-      age: 30,
-      postalCode: "69001",
-      city: "Lyon",
-      timestamp: new Date().toISOString(),
-      id: 1,
-    };
+  describe("API Error Handling", () => {
+    test("handles 400 error from API", async () => {
+      const error = new Error("Email already exists");
+      error.response = { status: 400, data: { message: "Email already exists" } };
+      apiService.createUser.mockRejectedValue(error);
 
-    apiService.getUsers.mockResolvedValue([existingUser]);
+      const user = userEvent.setup();
+      renderRegister();
 
-    const user = userEvent.setup();
-    renderRegister();
+      await user.type(screen.getByRole("textbox", { name: /first name/i }), "John");
+      await user.type(screen.getByRole("textbox", { name: /last name/i }), "Doe");
+      await user.type(screen.getByRole("textbox", { name: /email/i }), "john@example.com");
 
-    await waitFor(
-      () => {
-        expect(apiService.getUsers).toHaveBeenCalled();
-      },
-      { timeout: 3000 },
-    );
+      const birthDate = new Date();
+      birthDate.setFullYear(birthDate.getFullYear() - 25);
+      const dateString = birthDate.toISOString().split("T")[0];
+      await user.type(screen.getByLabelText(/birth date/i), dateString);
 
-    await new Promise((resolve) => setTimeout(resolve, 200));
+      await user.type(screen.getByRole("textbox", { name: /postal code/i }), "75001");
+      await user.type(screen.getByRole("textbox", { name: /city/i }), "Paris");
 
-    await user.type(screen.getByRole("textbox", { name: /first name/i }), "New");
-    await user.type(screen.getByRole("textbox", { name: /last name/i }), "User");
+      const submitButton = screen.getByRole("button", { name: /submit/i });
+      await waitFor(() => {
+        expect(submitButton).not.toBeDisabled();
+      });
 
-    const emailInput = screen.getByRole("textbox", { name: /email/i });
-    await user.type(emailInput, "existing@example.com");
-    await user.tab();
+      await user.click(submitButton);
 
-    const birthDate = new Date();
-    birthDate.setFullYear(birthDate.getFullYear() - 25);
-    const dateString = birthDate.toISOString().split("T")[0];
-    await user.type(screen.getByLabelText(/birth date/i), dateString);
+      await waitFor(() => {
+        expect(apiService.createUser).toHaveBeenCalled();
+      });
+    });
 
-    await user.type(screen.getByRole("textbox", { name: /postal code/i }), "75001");
-    await user.type(screen.getByRole("textbox", { name: /city/i }), "Paris");
+    test("handles 500 error from API", async () => {
+      const error = new Error("Internal Server Error");
+      error.response = { status: 500, data: { message: "Internal Server Error" } };
+      apiService.createUser.mockRejectedValue(error);
 
-    await waitFor(
-      () => {
-        const errorElement = screen.queryByText(/this email address is already registered/i);
-        expect(errorElement).toBeInTheDocument();
-      },
-      { timeout: 1000 },
-    );
+      const user = userEvent.setup();
+      renderRegister();
 
-    const submitButton = screen.getByRole("button", { name: /submit/i });
-    expect(submitButton).toBeDisabled();
+      await user.type(screen.getByRole("textbox", { name: /first name/i }), "John");
+      await user.type(screen.getByRole("textbox", { name: /last name/i }), "Doe");
+      await user.type(screen.getByRole("textbox", { name: /email/i }), "john@example.com");
+
+      const birthDate = new Date();
+      birthDate.setFullYear(birthDate.getFullYear() - 25);
+      const dateString = birthDate.toISOString().split("T")[0];
+      await user.type(screen.getByLabelText(/birth date/i), dateString);
+
+      await user.type(screen.getByRole("textbox", { name: /postal code/i }), "75001");
+      await user.type(screen.getByRole("textbox", { name: /city/i }), "Paris");
+
+      const submitButton = screen.getByRole("button", { name: /submit/i });
+      await waitFor(() => {
+        expect(submitButton).not.toBeDisabled();
+      });
+
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(apiService.createUser).toHaveBeenCalled();
+      });
+    });
+
+    test("handles other HTTP errors from API", async () => {
+      const error = new Error("Forbidden");
+      error.response = { status: 403, data: { message: "Forbidden" } };
+      apiService.createUser.mockRejectedValue(error);
+
+      const user = userEvent.setup();
+      renderRegister();
+
+      await user.type(screen.getByRole("textbox", { name: /first name/i }), "John");
+      await user.type(screen.getByRole("textbox", { name: /last name/i }), "Doe");
+      await user.type(screen.getByRole("textbox", { name: /email/i }), "john@example.com");
+
+      const birthDate = new Date();
+      birthDate.setFullYear(birthDate.getFullYear() - 25);
+      const dateString = birthDate.toISOString().split("T")[0];
+      await user.type(screen.getByLabelText(/birth date/i), dateString);
+
+      await user.type(screen.getByRole("textbox", { name: /postal code/i }), "75001");
+      await user.type(screen.getByRole("textbox", { name: /city/i }), "Paris");
+
+      const submitButton = screen.getByRole("button", { name: /submit/i });
+      await waitFor(() => {
+        expect(submitButton).not.toBeDisabled();
+      });
+
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(apiService.createUser).toHaveBeenCalled();
+      });
+    });
+
+    test("handles network error without response", async () => {
+      const error = new Error("Network Error");
+      apiService.createUser.mockRejectedValue(error);
+
+      const user = userEvent.setup();
+      renderRegister();
+
+      await user.type(screen.getByRole("textbox", { name: /first name/i }), "John");
+      await user.type(screen.getByRole("textbox", { name: /last name/i }), "Doe");
+      await user.type(screen.getByRole("textbox", { name: /email/i }), "john@example.com");
+
+      const birthDate = new Date();
+      birthDate.setFullYear(birthDate.getFullYear() - 25);
+      const dateString = birthDate.toISOString().split("T")[0];
+      await user.type(screen.getByLabelText(/birth date/i), dateString);
+
+      await user.type(screen.getByRole("textbox", { name: /postal code/i }), "75001");
+      await user.type(screen.getByRole("textbox", { name: /city/i }), "Paris");
+
+      const submitButton = screen.getByRole("button", { name: /submit/i });
+      await waitFor(() => {
+        expect(submitButton).not.toBeDisabled();
+      });
+
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(apiService.createUser).toHaveBeenCalled();
+      });
+    });
+
+    test("handles 400 error without message from API", async () => {
+      const error = new Error("Bad Request");
+      error.response = { status: 400, data: {} };
+      apiService.createUser.mockRejectedValue(error);
+
+      const user = userEvent.setup();
+      renderRegister();
+
+      await user.type(screen.getByRole("textbox", { name: /first name/i }), "John");
+      await user.type(screen.getByRole("textbox", { name: /last name/i }), "Doe");
+      await user.type(screen.getByRole("textbox", { name: /email/i }), "john@example.com");
+
+      const birthDate = new Date();
+      birthDate.setFullYear(birthDate.getFullYear() - 25);
+      const dateString = birthDate.toISOString().split("T")[0];
+      await user.type(screen.getByLabelText(/birth date/i), dateString);
+
+      await user.type(screen.getByRole("textbox", { name: /postal code/i }), "75001");
+      await user.type(screen.getByRole("textbox", { name: /city/i }), "Paris");
+
+      const submitButton = screen.getByRole("button", { name: /submit/i });
+      await waitFor(() => {
+        expect(submitButton).not.toBeDisabled();
+      });
+
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(apiService.createUser).toHaveBeenCalled();
+      });
+    });
+
+    test("handles other HTTP errors from API (not 400, not 500)", async () => {
+      const error = new Error("Forbidden");
+      error.response = { status: 403, data: {} };
+      apiService.createUser.mockRejectedValue(error);
+
+      const user = userEvent.setup();
+      renderRegister();
+
+      await user.type(screen.getByRole("textbox", { name: /first name/i }), "John");
+      await user.type(screen.getByRole("textbox", { name: /last name/i }), "Doe");
+      await user.type(screen.getByRole("textbox", { name: /email/i }), "john@example.com");
+
+      const birthDate = new Date();
+      birthDate.setFullYear(birthDate.getFullYear() - 25);
+      const dateString = birthDate.toISOString().split("T")[0];
+      await user.type(screen.getByLabelText(/birth date/i), dateString);
+
+      await user.type(screen.getByRole("textbox", { name: /postal code/i }), "75001");
+      await user.type(screen.getByRole("textbox", { name: /city/i }), "Paris");
+
+      const submitButton = screen.getByRole("button", { name: /submit/i });
+      await waitFor(() => {
+        expect(submitButton).not.toBeDisabled();
+      });
+
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(apiService.createUser).toHaveBeenCalled();
+      });
+    });
   });
 });

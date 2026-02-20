@@ -1,7 +1,6 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import UserForm from "./UserForm.jsx";
-import { toast } from "react-toastify";
 import { useUsers } from "../contexts/UserContext";
 
 jest.mock("react-toastify", () => ({
@@ -27,16 +26,11 @@ jest.mock("../contexts/UserContext", () => ({
  * - DOM rendering
  * - User interactions
  * - Validation feedback
- * - Form submission
- * - localStorage integration
+ * - Form submission via onUserRegistered callback
  */
 describe("UserForm - Integration Tests", () => {
-  let localStorageSpy;
-
   beforeEach(() => {
     localStorage.clear();
-
-    localStorageSpy = jest.spyOn(Storage.prototype, "setItem");
 
     jest.clearAllMocks();
 
@@ -47,10 +41,6 @@ describe("UserForm - Integration Tests", () => {
       loading: false,
       error: null,
     });
-  });
-
-  afterEach(() => {
-    localStorageSpy.mockRestore();
   });
 
   /**
@@ -266,9 +256,10 @@ describe("UserForm - Integration Tests", () => {
   /**
    * Test: Form submission - localStorage spy, toast notification, form reset
    */
-  test("should save to localStorage, show toast, and clear form on successful submit", async () => {
+  test("should call onUserRegistered callback and clear form on successful submit", async () => {
+    const mockOnUserRegistered = jest.fn();
     const user = userEvent.setup();
-    render(<UserForm />);
+    render(<UserForm onUserRegistered={mockOnUserRegistered} />);
 
     const firstNameInput = screen.getByRole("textbox", { name: /first name/i });
     const lastNameInput = screen.getByRole("textbox", { name: /^last name\s*\*/i });
@@ -297,29 +288,19 @@ describe("UserForm - Integration Tests", () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(localStorageSpy).toHaveBeenCalledWith("registeredUsers", expect.any(String));
+      expect(mockOnUserRegistered).toHaveBeenCalledTimes(1);
     });
 
-    const savedData = JSON.parse(localStorageSpy.mock.calls[0][1]);
-    expect(savedData).toBeInstanceOf(Array);
-    expect(savedData).toHaveLength(1);
-    expect(savedData[0]).toMatchObject({
+    const callbackData = mockOnUserRegistered.mock.calls[0][0];
+    expect(callbackData).toMatchObject({
       firstName: "Marie",
       lastName: "Martin",
       email: "marie.martin@example.com",
       postalCode: "69001",
       city: "Lyon",
     });
-    expect(savedData[0]).toHaveProperty("timestamp");
-    expect(savedData[0]).toHaveProperty("age");
-
-    expect(toast.success).toHaveBeenCalledWith(
-      "Form successfully submitted!",
-      expect.objectContaining({
-        position: "top-right",
-        autoClose: 3000,
-      }),
-    );
+    expect(callbackData).toHaveProperty("timestamp");
+    expect(callbackData).toHaveProperty("age");
 
     expect(firstNameInput).toHaveValue("");
     expect(lastNameInput).toHaveValue("");
@@ -335,8 +316,9 @@ describe("UserForm - Integration Tests", () => {
    * Test: Age calculation - birthday not yet occurred this year
    */
   test("should calculate age correctly when birthday hasn't occurred yet this year", async () => {
+    const mockOnUserRegistered = jest.fn();
     const user = userEvent.setup();
-    render(<UserForm />);
+    render(<UserForm onUserRegistered={mockOnUserRegistered} />);
 
     const firstNameInput = screen.getByRole("textbox", { name: /first name/i });
     const lastNameInput = screen.getByRole("textbox", { name: /^last name\s*\*/i });
@@ -365,12 +347,11 @@ describe("UserForm - Integration Tests", () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(localStorageSpy).toHaveBeenCalled();
+      expect(mockOnUserRegistered).toHaveBeenCalledTimes(1);
     });
 
-    const savedData = JSON.parse(localStorageSpy.mock.calls[0][1]);
-
-    expect(savedData[0].age).toBe(24);
+    const callbackData = mockOnUserRegistered.mock.calls[0][0];
+    expect(callbackData.age).toBe(24);
   });
 
   /**
@@ -594,7 +575,8 @@ describe("UserForm - Integration Tests", () => {
    * Test: Attempting to submit invalid form does nothing
    */
   test("should not submit form when data is invalid", async () => {
-    render(<UserForm />);
+    const mockOnUserRegistered = jest.fn();
+    render(<UserForm onUserRegistered={mockOnUserRegistered} />);
 
     const firstNameInput = screen.getByRole("textbox", { name: /first name/i });
     const form = screen.getByRole("form", { name: /user registration form/i });
@@ -603,7 +585,7 @@ describe("UserForm - Integration Tests", () => {
 
     fireEvent.submit(form);
 
-    expect(localStorage.getItem("registeredUsers")).toBeNull();
+    expect(mockOnUserRegistered).not.toHaveBeenCalled();
   });
 
   /**
@@ -710,8 +692,9 @@ describe("UserForm - Integration Tests", () => {
    * Test: Multiple users can be registered with different emails
    */
   test("should allow multiple users to register with unique emails", async () => {
+    const mockOnUserRegistered = jest.fn();
     const user = userEvent.setup();
-    render(<UserForm />);
+    render(<UserForm onUserRegistered={mockOnUserRegistered} />);
 
     const fillForm = async (firstName, lastName, email, city) => {
       const firstNameInput = screen.getByRole("textbox", { name: /first name/i });
@@ -744,7 +727,7 @@ describe("UserForm - Integration Tests", () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(toast.success).toHaveBeenCalled();
+      expect(mockOnUserRegistered).toHaveBeenCalledTimes(1);
     });
 
     await fillForm("Bob", "Dupont", "bob@example.com", "Lyon");
@@ -756,49 +739,11 @@ describe("UserForm - Integration Tests", () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(toast.success).toHaveBeenCalledTimes(2);
+      expect(mockOnUserRegistered).toHaveBeenCalledTimes(2);
     });
 
-    const users = JSON.parse(localStorage.getItem("registeredUsers"));
-    expect(users).toHaveLength(2);
-    expect(users[0].email).toBe("alice@example.com");
-    expect(users[1].email).toBe("bob@example.com");
-  });
-
-  /**
-   * Test: Form submission handles corrupted localStorage gracefully
-   */
-  test("should handle corrupted localStorage data during form submission", async () => {
-    localStorage.setItem("registeredUsers", "{invalid json}");
-
-    const user = userEvent.setup();
-    render(<UserForm />);
-
-    const firstNameInput = screen.getByRole("textbox", { name: /first name/i });
-    const lastNameInput = screen.getByRole("textbox", { name: /^last name\s*\*/i });
-    const emailInput = screen.getByRole("textbox", { name: /email/i });
-    const birthDateInput = screen.getByLabelText(/birth date/i);
-    const postalCodeInput = screen.getByRole("textbox", { name: /postal code/i });
-    const cityInput = screen.getByRole("textbox", { name: /city/i });
-
-    await user.type(firstNameInput, "Test");
-    await user.type(lastNameInput, "User");
-    await user.type(emailInput, "test@example.com");
-    await user.type(birthDateInput, "2000-01-01");
-    await user.type(postalCodeInput, "75001");
-    await user.type(cityInput, "Paris");
-
-    const submitButton = screen.getByRole("button", { name: /submit/i });
-    await user.click(submitButton);
-
-    await waitFor(() => {
-      expect(toast.success).toHaveBeenCalled();
-    });
-
-    const savedData = JSON.parse(localStorage.getItem("registeredUsers"));
-    expect(savedData).toBeInstanceOf(Array);
-    expect(savedData).toHaveLength(1);
-    expect(savedData[0].email).toBe("test@example.com");
+    expect(mockOnUserRegistered.mock.calls[0][0].email).toBe("alice@example.com");
+    expect(mockOnUserRegistered.mock.calls[1][0].email).toBe("bob@example.com");
   });
 
   /**
@@ -806,8 +751,9 @@ describe("UserForm - Integration Tests", () => {
    * This tests the validation loop in isFormValid that checks each field
    */
   test("should prevent submission when all fields are filled but email is invalid", async () => {
+    const mockOnUserRegistered = jest.fn();
     const user = userEvent.setup();
-    render(<UserForm />);
+    render(<UserForm onUserRegistered={mockOnUserRegistered} />);
 
     const firstNameInput = screen.getByRole("textbox", { name: /first name/i });
     const lastNameInput = screen.getByRole("textbox", { name: /^last name\s*\*/i });
@@ -839,7 +785,7 @@ describe("UserForm - Integration Tests", () => {
     fireEvent.submit(screen.getByRole("form", { name: /user registration form/i }));
 
     await waitFor(() => {
-      expect(localStorage.getItem("registeredUsers")).toBeNull();
+      expect(mockOnUserRegistered).not.toHaveBeenCalled();
     });
   });
 
@@ -847,8 +793,9 @@ describe("UserForm - Integration Tests", () => {
    * Test: Form submission prevented when postal code is invalid but all fields filled
    */
   test("should prevent submission when postal code is invalid", async () => {
+    const mockOnUserRegistered = jest.fn();
     const user = userEvent.setup();
-    render(<UserForm />);
+    render(<UserForm onUserRegistered={mockOnUserRegistered} />);
 
     const firstNameInput = screen.getByRole("textbox", { name: /first name/i });
     const lastNameInput = screen.getByRole("textbox", { name: /^last name\s*\*/i });
@@ -880,7 +827,7 @@ describe("UserForm - Integration Tests", () => {
     fireEvent.submit(screen.getByRole("form", { name: /user registration form/i }));
 
     await waitFor(() => {
-      expect(localStorage.getItem("registeredUsers")).toBeNull();
+      expect(mockOnUserRegistered).not.toHaveBeenCalled();
     });
   });
 

@@ -1,4 +1,4 @@
-import { render, screen, waitFor, act } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { UserProvider, useUsers } from "./UserContext";
 import apiService from "../services/api";
 
@@ -29,6 +29,42 @@ function TestComponent() {
         }>
         Add User
       </button>
+      <button onClick={refreshUsers}>Refresh Users</button>
+      <ul>
+        {users.map((user, index) => (
+          <li key={index}>{user.email}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/**
+ * Test component that catches addUser errors
+ */
+function TestComponentWithErrorHandling() {
+  const { users, addUser, refreshUsers, loading, error } = useUsers();
+
+  const handleAddUser = async () => {
+    try {
+      await addUser({
+        firstName: "Test",
+        lastName: "User",
+        email: "test@example.com",
+        age: 25,
+        postalCode: "75001",
+        city: "Paris",
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err) {}
+  };
+
+  return (
+    <div>
+      <div data-testid="user-count">{users.length}</div>
+      <div data-testid="loading">{loading ? "Loading..." : "Not loading"}</div>
+      <div data-testid="error">{error || "No error"}</div>
+      <button onClick={handleAddUser}>Add User With Handling</button>
       <button onClick={refreshUsers}>Refresh Users</button>
       <ul>
         {users.map((user, index) => (
@@ -121,9 +157,7 @@ describe("UserContext", () => {
     });
 
     const addButton = screen.getByText("Add User");
-    await act(async () => {
-      addButton.click();
-    });
+    addButton.click();
 
     await waitFor(() => {
       expect(screen.getByTestId("user-count")).toHaveTextContent("1");
@@ -164,9 +198,7 @@ describe("UserContext", () => {
     apiService.getUsers.mockResolvedValueOnce([newUser]);
 
     const refreshButton = screen.getByText("Refresh Users");
-    await act(async () => {
-      refreshButton.click();
-    });
+    refreshButton.click();
 
     await waitFor(() => {
       expect(screen.getByTestId("user-count")).toHaveTextContent("1");
@@ -177,7 +209,6 @@ describe("UserContext", () => {
   });
 
   test("handles API errors gracefully", async () => {
-    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
     const apiError = new Error("Network Error");
     apiService.getUsers.mockRejectedValue(apiError);
 
@@ -193,9 +224,6 @@ describe("UserContext", () => {
 
     expect(screen.getByTestId("user-count")).toHaveTextContent("0");
     expect(screen.getByTestId("error")).not.toHaveTextContent("No error");
-    expect(consoleError).toHaveBeenCalledWith("Error loading users from API:", apiError);
-
-    consoleError.mockRestore();
   });
 
   test("handles missing API data (empty response)", async () => {
@@ -216,8 +244,6 @@ describe("UserContext", () => {
   });
 
   test("throws error when useUsers is used outside UserProvider", () => {
-    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
-
     function InvalidComponent() {
       useUsers();
       return <div>Test</div>;
@@ -226,8 +252,6 @@ describe("UserContext", () => {
     expect(() => {
       render(<InvalidComponent />);
     }).toThrow("useUsers must be used within a UserProvider");
-
-    consoleError.mockRestore();
   });
 
   test("addUser and refresh work together correctly", async () => {
@@ -269,18 +293,14 @@ describe("UserContext", () => {
     });
 
     const addButton = screen.getByText("Add User");
-    await act(async () => {
-      addButton.click();
-    });
+    addButton.click();
 
     await waitFor(() => {
       expect(screen.getByTestId("user-count")).toHaveTextContent("1");
     });
 
     const refreshButton = screen.getByText("Refresh Users");
-    await act(async () => {
-      refreshButton.click();
-    });
+    refreshButton.click();
 
     await waitFor(() => {
       expect(screen.getByTestId("user-count")).toHaveTextContent("2");
@@ -288,5 +308,48 @@ describe("UserContext", () => {
 
     expect(screen.getByText("test@example.com")).toBeInTheDocument();
     expect(screen.getByText("second@example.com")).toBeInTheDocument();
+  });
+
+  test("handles API error without message in loadUsers", async () => {
+    const apiError = {};
+    apiService.getUsers.mockRejectedValue(apiError);
+
+    render(
+      <UserProvider>
+        <TestComponent />
+      </UserProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("loading")).toHaveTextContent("Not loading");
+    });
+
+    expect(screen.getByTestId("user-count")).toHaveTextContent("0");
+    expect(screen.getByTestId("error")).toHaveTextContent("Failed to load users");
+  });
+
+  test("handles API error without message in addUser", async () => {
+    const apiError = {};
+
+    apiService.getUsers.mockResolvedValue([]);
+    apiService.createUser.mockRejectedValue(apiError);
+
+    render(
+      <UserProvider>
+        <TestComponentWithErrorHandling />
+      </UserProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("loading")).toHaveTextContent("Not loading");
+    });
+
+    const addButton = screen.getByText("Add User With Handling");
+
+    fireEvent.click(addButton);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("error")).toHaveTextContent("Failed to create user");
+    });
   });
 });

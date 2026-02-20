@@ -89,6 +89,93 @@ describe("API Service", () => {
       await expect(apiService.getUsers()).rejects.toThrow(errorMessage);
       expect(axios.get).toHaveBeenCalledWith("https://jsonplaceholder.typicode.com/users");
     });
+
+    it("should handle missing address data with fallback values", async () => {
+      const mockApiResponse = [
+        {
+          id: 3,
+          name: "SingleName",
+          email: "TEST@EXAMPLE.COM",
+        },
+      ];
+
+      axios.get.mockResolvedValue({ data: mockApiResponse });
+
+      const users = await apiService.getUsers();
+
+      expect(users).toHaveLength(1);
+      expect(users[0]).toEqual({
+        id: 3,
+        firstName: "SingleName",
+        lastName: "User",
+        email: "test@example.com",
+        age: 27,
+        city: "Unknown",
+        postalCode: "00000",
+        timestamp: expect.any(String),
+      });
+    });
+
+    it("should handle missing city in address", async () => {
+      const mockApiResponse = [
+        {
+          id: 4,
+          name: "Test User",
+          email: "test@example.com",
+          address: {
+            zipcode: "12345-6789",
+          },
+        },
+      ];
+
+      axios.get.mockResolvedValue({ data: mockApiResponse });
+
+      const users = await apiService.getUsers();
+
+      expect(users[0].city).toBe("Unknown");
+      expect(users[0].postalCode).toBe("12345");
+    });
+
+    it("should handle missing zipcode in address", async () => {
+      const mockApiResponse = [
+        {
+          id: 5,
+          name: "Test User",
+          email: "test@example.com",
+          address: {
+            city: "TestCity",
+          },
+        },
+      ];
+
+      axios.get.mockResolvedValue({ data: mockApiResponse });
+
+      const users = await apiService.getUsers();
+
+      expect(users[0].city).toBe("TestCity");
+      expect(users[0].postalCode).toBe("00000");
+    });
+
+    it("should handle empty name with fallback to Unknown", async () => {
+      const mockApiResponse = [
+        {
+          id: 6,
+          name: "",
+          email: "test@example.com",
+          address: {
+            city: "TestCity",
+            zipcode: "12345",
+          },
+        },
+      ];
+
+      axios.get.mockResolvedValue({ data: mockApiResponse });
+
+      const users = await apiService.getUsers();
+
+      expect(users[0].firstName).toBe("Unknown");
+      expect(users[0].lastName).toBe("User");
+    });
   });
 
   describe("createUser", () => {

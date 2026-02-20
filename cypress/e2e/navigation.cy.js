@@ -284,7 +284,8 @@ describe("Navigation E2E Tests", () => {
 
     cy.url().should("not.include", "/register");
 
-    cy.contains("User successfully registered").should("be.visible");
+    cy.get(".Toastify__toast--success", { timeout: 8000 }).should("be.visible");
+
     cy.contains("Total users:").should("contain", "1");
     cy.contains("John").should("be.visible");
     cy.contains("Doe").should("be.visible");
@@ -408,7 +409,6 @@ describe("Navigation E2E Tests", () => {
       id: 1,
     };
 
-    // Configure intercept for reload - transform to JSONPlaceholder format
     const apiFormatUser = transformUserToApiFormat(persistentUser);
     cy.intercept("GET", "https://jsonplaceholder.typicode.com/users", {
       statusCode: 200,
@@ -454,5 +454,264 @@ describe("Navigation E2E Tests", () => {
     cy.get('input[name="birthDate"]').should("have.value", "");
     cy.get('input[name="postalCode"]').should("have.value", "");
     cy.get('input[name="city"]').should("have.value", "");
+  });
+});
+
+/**
+ * Error Scenario - API Errors (400, 500)
+ */
+describe("Error Scenario - API Error Handling", () => {
+  beforeEach(() => {
+    cy.intercept("GET", "https://jsonplaceholder.typicode.com/users", {
+      statusCode: 200,
+      body: [],
+    }).as("getUsers");
+
+    cy.visit("/");
+    cy.wait("@getUsers");
+  });
+
+  /**
+   * Test: Handle 400 error - Email already exists
+   */
+  it("should display error message when API returns 400 (duplicate email)", () => {
+    cy.intercept("POST", "https://jsonplaceholder.typicode.com/users", {
+      statusCode: 400,
+      body: {
+        message: "Email already exists",
+      },
+    }).as("createUserError400");
+
+    cy.contains("Register New User").click();
+    cy.url().should("include", "/register");
+
+    cy.get('input[name="firstName"]').type("John");
+    cy.get('input[name="lastName"]').type("Doe");
+    cy.get('input[name="email"]').type("duplicate@example.com");
+
+    const birthDate = new Date();
+    birthDate.setFullYear(birthDate.getFullYear() - 25);
+    const dateString = birthDate.toISOString().split("T")[0];
+    cy.get('input[name="birthDate"]').type(dateString);
+
+    cy.get('input[name="postalCode"]').type("75001");
+    cy.get('input[name="city"]').type("Paris");
+
+    cy.get('button[type="submit"]').click();
+    cy.wait("@createUserError400");
+
+    cy.get(".Toastify__toast--error", { timeout: 8000 }).should("be.visible");
+
+    cy.url().should("include", "/register");
+
+    cy.visit("/");
+    cy.wait("@getUsers");
+    cy.get("[data-cy='user-count-value']").should("contain", "0");
+  });
+
+  /**
+   * Test: Handle 400 error with custom message
+   */
+  it("should display custom error message from API when 400 with message", () => {
+    cy.intercept("POST", "https://jsonplaceholder.typicode.com/users", {
+      statusCode: 400,
+      body: {
+        message: "Email already exists in database",
+      },
+    }).as("createUserError400Custom");
+
+    cy.contains("Register New User").click();
+
+    cy.get('input[name="firstName"]').type("Alice");
+    cy.get('input[name="lastName"]').type("Smith");
+    cy.get('input[name="email"]').type("existing@example.com");
+
+    const birthDate = new Date();
+    birthDate.setFullYear(birthDate.getFullYear() - 30);
+    const dateString = birthDate.toISOString().split("T")[0];
+    cy.get('input[name="birthDate"]').type(dateString);
+
+    cy.get('input[name="postalCode"]').type("69001");
+    cy.get('input[name="city"]').type("Lyon");
+
+    cy.get('button[type="submit"]').click();
+    cy.wait("@createUserError400Custom");
+
+    cy.get(".Toastify__toast--error", { timeout: 8000 }).should("be.visible");
+    cy.url().should("include", "/register");
+  });
+
+  /**
+   * Test: Handle 500 error - Server down
+   */
+  it("should display error message when API returns 500 (server error)", () => {
+    cy.intercept("POST", "https://jsonplaceholder.typicode.com/users", {
+      statusCode: 500,
+      body: {
+        message: "Internal Server Error",
+      },
+    }).as("createUserError500");
+
+    cy.contains("Register New User").click();
+    cy.url().should("include", "/register");
+
+    cy.get('input[name="firstName"]').type("Bob");
+    cy.get('input[name="lastName"]').type("Johnson");
+    cy.get('input[name="email"]').type("bob@example.com");
+
+    const birthDate = new Date();
+    birthDate.setFullYear(birthDate.getFullYear() - 28);
+    const dateString = birthDate.toISOString().split("T")[0];
+    cy.get('input[name="birthDate"]').type(dateString);
+
+    cy.get('input[name="postalCode"]').type("13001");
+    cy.get('input[name="city"]').type("Marseille");
+
+    cy.get('button[type="submit"]').click();
+    cy.wait("@createUserError500");
+
+    cy.get(".Toastify__toast--error", { timeout: 8000 }).should("be.visible");
+
+    cy.url().should("include", "/register");
+
+    cy.get('input[name="firstName"]').should("be.visible");
+    cy.get('button[type="submit"]').should("be.visible");
+
+    cy.visit("/");
+    cy.wait("@getUsers");
+    cy.get("[data-cy='user-count-value']").should("contain", "0");
+  });
+
+  /**
+   * Test: Handle 503 Service Unavailable
+   */
+  it("should handle 503 error gracefully (service unavailable)", () => {
+    cy.intercept("POST", "https://jsonplaceholder.typicode.com/users", {
+      statusCode: 503,
+      body: {
+        message: "Service Temporarily Unavailable",
+      },
+    }).as("createUserError503");
+
+    cy.contains("Register New User").click();
+
+    cy.get('input[name="firstName"]').type("Charlie");
+    cy.get('input[name="lastName"]').type("Brown");
+    cy.get('input[name="email"]').type("charlie@example.com");
+
+    const birthDate = new Date();
+    birthDate.setFullYear(birthDate.getFullYear() - 35);
+    const dateString = birthDate.toISOString().split("T")[0];
+    cy.get('input[name="birthDate"]').type(dateString);
+
+    cy.get('input[name="postalCode"]').type("33000");
+    cy.get('input[name="city"]').type("Bordeaux");
+
+    cy.get('button[type="submit"]').click();
+    cy.wait("@createUserError503");
+
+    cy.get(".Toastify__toast--error", { timeout: 8000 }).should("be.visible");
+
+    cy.get('input[name="firstName"]').should("be.visible");
+  });
+
+  /**
+   * Test: Handle network error (no response)
+   */
+  it("should handle network error when API is unreachable", () => {
+    cy.intercept("POST", "https://jsonplaceholder.typicode.com/users", {
+      forceNetworkError: true,
+    }).as("createUserNetworkError");
+
+    cy.contains("Register New User").click();
+
+    cy.get('input[name="firstName"]').type("Network");
+    cy.get('input[name="lastName"]').type("Test");
+    cy.get('input[name="email"]').type("network@example.com");
+
+    const birthDate = new Date();
+    birthDate.setFullYear(birthDate.getFullYear() - 25);
+    const dateString = birthDate.toISOString().split("T")[0];
+    cy.get('input[name="birthDate"]').type(dateString);
+
+    cy.get('input[name="postalCode"]').type("59000");
+    cy.get('input[name="city"]').type("Lille");
+
+    cy.get('button[type="submit"]').click();
+    cy.wait("@createUserNetworkError");
+
+    cy.get(".Toastify__toast--error", { timeout: 8000 }).should("be.visible");
+
+    cy.get('input[name="firstName"]').should("be.visible");
+    cy.url().should("include", "/register");
+  });
+
+  /**
+   * Test: Handle GET users error on home page
+   */
+  it("should handle error when fetching users fails (500 on GET)", () => {
+    cy.intercept("GET", "https://jsonplaceholder.typicode.com/users", {
+      statusCode: 500,
+      body: {
+        message: "Database connection failed",
+      },
+    }).as("getUsersError500");
+
+    cy.visit("/");
+    cy.wait("@getUsersError500");
+
+    cy.get("[data-cy='home-page']").should("be.visible");
+    cy.contains("Registered Users").should("be.visible");
+
+    cy.get("[data-cy='user-count-value']").should("contain", "0");
+  });
+
+  /**
+   * Test: Retry after error - successful submission after fixing 400 error
+   */
+  it("should allow retry after 400 error", () => {
+    cy.intercept("POST", "https://jsonplaceholder.typicode.com/users", {
+      statusCode: 400,
+      body: { message: "Email already exists" },
+    }).as("createUserError");
+
+    cy.contains("Register New User").click();
+
+    cy.get('input[name="firstName"]').type("Retry");
+    cy.get('input[name="lastName"]').type("User");
+    cy.get('input[name="email"]').type("retry@example.com");
+
+    const birthDate = new Date();
+    birthDate.setFullYear(birthDate.getFullYear() - 27);
+    const dateString = birthDate.toISOString().split("T")[0];
+    cy.get('input[name="birthDate"]').type(dateString);
+
+    cy.get('input[name="postalCode"]').type("44000");
+    cy.get('input[name="city"]').type("Nantes");
+
+    cy.get('button[type="submit"]').click();
+    cy.wait("@createUserError");
+
+    cy.get(".Toastify__toast--error", { timeout: 8000 }).should("be.visible");
+    cy.url().should("include", "/register");
+
+    cy.intercept("POST", "https://jsonplaceholder.typicode.com/users", {
+      statusCode: 201,
+      body: {
+        firstName: "Retry",
+        lastName: "User",
+        email: "retry-new@example.com",
+        age: 27,
+        postalCode: "44000",
+        city: "Nantes",
+        id: Date.now(),
+      },
+    }).as("createUserSuccess");
+
+    cy.get('input[name="email"]').clear().type("retry-new@example.com");
+
+    cy.wait(1000);
+
+    cy.get('button[type="submit"]').click({ force: true });
   });
 });

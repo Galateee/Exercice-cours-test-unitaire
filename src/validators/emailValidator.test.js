@@ -314,18 +314,24 @@ describe("validateUniqueEmail - Email uniqueness validation", () => {
       expect(() => validateUniqueEmail("test@example.com", [])).not.toThrow();
     });
 
-    it("should handle corrupted localStorage data gracefully", () => {
+    it("should handle empty localStorage gracefully", () => {
       const originalValue = localStorage.getItem("registeredUsers");
 
-      localStorage.setItem("registeredUsers", "{invalid json}");
+      localStorage.removeItem("registeredUsers");
 
-      expect(() => validateUniqueEmail("test@example.com")).not.toThrow();
+      expect(() => validateUniqueEmail("test@example.com", null)).not.toThrow();
 
       if (originalValue) {
         localStorage.setItem("registeredUsers", originalValue);
-      } else {
-        localStorage.removeItem("registeredUsers");
       }
+    });
+
+    it("should handle corrupted localStorage data gracefully", () => {
+      localStorage.setItem("registeredUsers", "not a valid JSON { string");
+
+      expect(() => validateUniqueEmail("test@example.com", null)).not.toThrow();
+
+      localStorage.removeItem("registeredUsers");
     });
   });
 });

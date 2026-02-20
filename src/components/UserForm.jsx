@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import * as validators from "../validators";
 import { useUsers } from "../contexts/UserContext";
 import "react-toastify/dist/ReactToastify.css";
@@ -63,30 +63,11 @@ const INITIAL_TOUCHED = {
 };
 
 /**
- * Default configuration for toast notifications
- * @constant {Object}
- * @property {string} position - Position of toast on screen
- * @property {number} autoClose - Time in ms before auto-closing
- * @property {boolean} hideProgressBar - Whether to hide progress bar
- * @property {boolean} closeOnClick - Whether clicking closes the toast
- * @property {boolean} pauseOnHover - Whether hovering pauses auto-close timer
- * @property {boolean} draggable - Whether toast can be dragged
- */
-const TOAST_CONFIG = {
-  position: "top-right",
-  autoClose: 3000,
-  hideProgressBar: false,
-  closeOnClick: true,
-  pauseOnHover: true,
-  draggable: true,
-};
-
-/**
  * UserForm Component - Registration form with real-time validation
  *
  * @component
  * @description Form component that collects user information (first name, last name, email,
- * birth date, postal code, city) with immediate validation feedback and localStorage persistence.
+ * birth date, postal code, city) with immediate validation feedback.
  *
  * @param {Object} props - Component props
  * @param {Function} [props.onUserRegistered] - Optional callback function called after successful registration with user data
@@ -279,18 +260,7 @@ const UserForm = ({ onUserRegistered }) => {
         timestamp: new Date().toISOString(),
       };
 
-      if (onUserRegistered) {
-        onUserRegistered(userData);
-      } else {
-        try {
-          const storedUsers = JSON.parse(localStorage.getItem("registeredUsers") || "[]");
-          storedUsers.push(userData);
-          localStorage.setItem("registeredUsers", JSON.stringify(storedUsers));
-        } catch (error) {
-          localStorage.setItem("registeredUsers", JSON.stringify([userData]));
-        }
-        toast.success("Form successfully submitted!", TOAST_CONFIG);
-      }
+      onUserRegistered(userData);
 
       setFormData(INITIAL_FORM_DATA);
       setErrors(INITIAL_ERRORS);
