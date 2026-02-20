@@ -5,6 +5,7 @@
 - [Vue d'ensemble](#vue-densemble)
 - [Tests Unitaires (UT)](#tests-unitaires-ut)
 - [Tests d'Intégration (IT)](#tests-dintégration-it)
+- [Tests End-to-End (E2E)](#tests-end-to-end-e2e)
 - [Couverture de Code](#couverture-de-code)
 - [Stratégie de Test](#stratégie-de-test)
 
@@ -16,9 +17,10 @@ Ce projet implémente un formulaire d'inscription utilisateur avec validation en
 
 - **Tests Unitaires (UT)** : Validation de la logique métier isolée (validators)
 - **Tests d'Intégration (IT)** : Validation de l'interface utilisateur et de l'intégration des composants
+- **Tests End-to-End (E2E)** : Validation des parcours utilisateur complets avec API mocking
 
-**Total des tests** : 190 tests
-**Couverture de code** : 100%
+**Total des tests** : 237 tests Jest + 18 tests Cypress E2E = **255 tests**
+**Couverture de code** : 100% (Jest)
 
 ### Évolutions récentes testées
 
@@ -44,7 +46,7 @@ Ce projet implémente un formulaire d'inscription utilisateur avec validation en
 
 Les tests unitaires se concentrent sur la validation des règles métier de manière isolée, sans dépendance UI.
 
-### 1. ageValidator.test.js (19 tests)
+### 1. ageValidator.test.js (16 tests)
 
 #### Scénarios couverts :
 
@@ -66,7 +68,7 @@ Les tests unitaires se concentrent sur la validation des règles métier de mani
 - **Date de référence custom**
   - Permet de spécifier une date de référence pour les calculs
 
-### 2. emailValidator.test.js (179 tests)
+### 2. emailValidator.test.js (53 tests)
 
 #### Scénarios couverts :
 
@@ -94,7 +96,7 @@ Les tests unitaires se concentrent sur la validation des règles métier de mani
   - Comparaison case-insensitive (test@example.com = TEST@EXAMPLE.COM)
   - validateEmailComplete : format + unicité simultanée
 
-### 3. identityValidator.test.js (36 tests)
+### 3. identityValidator.test.js (30 tests)
 
 #### Scénarios couverts :
 
@@ -116,7 +118,7 @@ Les tests unitaires se concentrent sur la validation des règles métier de mani
 - **Sécurité**
   - Détecte tentatives XSS multiples
 
-### 4. postalCodeValidator.test.js (16 tests)
+### 4. postalCodeValidator.test.js (21 tests)
 
 #### Scénarios couverts :
 
@@ -157,7 +159,7 @@ Les tests unitaires se concentrent sur la validation des règles métier de mani
 
 Les tests d'intégration valident l'interaction entre l'UI et la logique métier, simulant le comportement d'un utilisateur réel.
 
-### UserForm.test.jsx (44 tests)
+### UserForm.test.jsx (30 tests)
 
 #### 1. Rendu et Structure du Formulaire (2 tests)
 
@@ -230,6 +232,202 @@ Les tests d'intégration valident l'interaction entre l'UI et la logique métier
 
 ---
 
+## Tests End-to-End (E2E)
+
+Les tests E2E valident les parcours utilisateur complets à travers l'application multi-pages avec **Cypress**. Tous les appels API sont mockés avec `cy.intercept()` pour garantir l'isolation des tests.
+
+### cypress/e2e/navigation.cy.js (18 tests)
+
+#### 1. Scénario Nominal - Navigation et Inscription (1 test)
+
+**Test** : Parcours complet d'inscription d'un utilisateur
+
+- Visite de la page Home (0 utilisateur)
+- Navigation vers /register
+- Remplissage du formulaire avec données valides
+- Soumission du formulaire
+- Redirection vers Home avec l'utilisateur affiché
+- Vérification du compteur (1 utilisateur)
+- Vérification de la liste avec les données correctes
+
+**API Mocking** :
+
+- `GET /users` → 200 (liste vide initialement)
+- `POST /users` → 201 (création réussie)
+
+---
+
+#### 2. Scénario d'Erreur - Validation et État Inchangé (2 tests)
+
+**Test 1** : Rejet d'un email déjà enregistré
+
+- État initial : 1 utilisateur existant
+- Tentative d'inscription avec email en doublon
+- Affichage de l'erreur de validation
+- Bouton submit désactivé
+- Retour à Home → état inchangé (toujours 1 utilisateur)
+
+**Test 2** : Rejet d'un formulaire avec champs invalides
+
+- État initial : 1 utilisateur existant
+- Tentative de soumission avec champs vides/invalides
+- Vérification que le bouton reste désactivé
+- Retour à Home → état inchangé
+
+**API Mocking** :
+
+- `GET /users` → 200 (1 utilisateur existant)
+- Pas d'appel POST (validation front-end bloque)
+
+---
+
+#### 3. Tests de Navigation E2E (9 tests)
+
+**Test 1** : Chargement de la page Home
+
+- Affichage du titre "Registered Users"
+- Affichage du compteur d'utilisateurs
+- Affichage du bouton "Register New User"
+- Message d'état vide visible
+
+**Test 2** : Navigation Home → Register
+
+- Click sur "Register New User"
+- URL contient `/register`
+- Affichage du formulaire d'inscription
+- Tous les champs sont visibles
+
+**Test 3** : Navigation Register → Home
+
+- Click sur "Back to Home"
+- Retour à la page Home
+- URL ne contient plus `/register`
+
+**Test 4** : Inscription et redirection vers Home
+
+- Remplissage du formulaire complet
+- Soumission → redirection automatique vers Home
+- Toast de succès affiché
+- Utilisateur visible dans la liste
+
+**Test 5** : Inscription de plusieurs utilisateurs
+
+- Inscription de 2 utilisateurs successifs
+- Vérification du compteur incrémenté
+- Tous les utilisateurs visibles dans la liste
+
+**Test 6** : Disparition du message d'état vide
+
+- Message "No users registered yet" visible initialement
+- Inscription d'un utilisateur
+- Message d'état vide disparaît
+- Liste des utilisateurs s'affiche
+
+**Test 7** : Persistance des données (via API)
+
+- Inscription d'un utilisateur
+- Rechargement de la page (`cy.reload()`)
+- Mock de `GET /users` avec données de test
+- Données toujours affichées après reload
+
+**Test 8** : Réinitialisation du formulaire
+
+- Inscription réussie d'un utilisateur
+- Navigation vers /register
+- Vérification que tous les champs sont vides
+- Bouton submit désactivé
+
+**Test 9** : Préservation de l'état après click "Back"
+
+- Navigation Register → Home sans soumission
+- État de la liste préservé
+
+**API Mocking** :
+
+- `GET /users` → 200 (liste vide ou avec utilisateurs)
+- `POST /users` → 201 (création réussie)
+
+---
+
+#### 4. Scénario d'Erreur - Gestion des Erreurs API (6 tests)
+
+**Test 1** : Erreur 400 - Email déjà existant (duplicate)
+
+- Mock `POST /users` → 400 avec message "Email already exists"
+- Toast d'erreur affiché
+- Utilisateur reste sur /register
+- Compteur reste à 0
+
+**Test 2** : Erreur 400 avec message personnalisé
+
+- Mock `POST /users` → 400 avec message custom
+- Toast d'erreur affiché avec le message API
+- Formulaire reste accessible pour correction
+
+**Test 3** : Erreur 500 - Erreur serveur
+
+- Mock `POST /users` → 500 "Internal Server Error"
+- Toast d'erreur affiché
+- Utilisateur reste sur /register
+- Formulaire reste visible pour retry
+- Compteur reste à 0
+
+**Test 4** : Erreur 503 - Service Unavailable
+
+- Mock `POST /users` → 503 "Service Temporarily Unavailable"
+- Toast d'erreur affiché
+- Formulaire reste accessible
+
+**Test 5** : Erreur réseau (API injoignable)
+
+- Mock `POST /users` → `forceNetworkError: true`
+- Toast d'erreur affiché
+- Utilisateur reste sur /register
+- Formulaire reste visible
+
+**Test 6** : Erreur GET /users sur Home (load initial)
+
+- Mock `GET /users` → 500 "Database connection failed"
+- Page Home s'affiche quand même
+- Compteur affiche 0
+- Aucun crash de l'application
+
+**API Mocking** :
+
+- `GET /users` → 200 (liste vide)
+- `POST /users` → 400/500/503/network error
+
+---
+
+### Stratégie de Mocking E2E
+
+#### Isolation totale des tests
+
+```javascript
+// Setup dans beforeEach
+cy.intercept("GET", "https://jsonplaceholder.typicode.com/users", {
+  statusCode: 200,
+  body: mockUsers,
+}).as("getUsers");
+
+cy.intercept("POST", "https://jsonplaceholder.typicode.com/users", (req) => {
+  req.reply({
+    statusCode: 201,
+    body: { ...req.body, id: Date.now() },
+  });
+}).as("createUser");
+```
+
+#### Scénarios d'erreur testés
+
+- **400 Bad Request** : Validation serveur (email duplicate)
+- **500 Internal Server Error** : Crash serveur
+- **503 Service Unavailable** : Service temporairement indisponible
+- **Network Error** : API complètement injoignable
+- **GET Error** : Erreur lors du chargement initial des utilisateurs
+
+---
+
 ## Couverture de Code
 
 ```
@@ -256,7 +454,7 @@ All files                |     100 |      100 |     100 |     100 |
 
 ### Répartition des Responsabilités
 
-#### Tests Unitaires (UT) - 146 tests
+#### Tests Unitaires (UT) - 159 tests
 
 **Objectif** : Valider la logique métier de manière isolée
 
@@ -267,14 +465,52 @@ All files                |     100 |      100 |     100 |     100 |
 - **Gestion d'erreurs** : Messages explicites, codes d'erreur spécifiques
 - **Indépendance** : Pas de dépendance UI, rapides à exécuter
 
-#### Tests d'Intégration (IT) - 44 tests
+**Fichiers** :
 
-**Objectif** : Valider l'intégration UI + logique métier
+- ageValidator.test.js (16 tests)
+- emailValidator.test.js (53 tests)
+- identityValidator.test.js (30 tests)
+- postalCodeValidator.test.js (21 tests)
+- userValidator.test.js (39 tests)
+
+#### Tests d'Intégration (IT) - 78 tests
+
+**Objectif** : Valider l'intégration UI + logique métier + API
 
 - **Interaction utilisateur** : Saisie clavier, focus, blur, click, autofill
 - **Feedback visuel** : Affichage des erreurs, états du bouton, styles CSS
 - **Flux complets** : Formulaire invalide → corrections → soumission
-- **Intégrations externes** : localStorage (lecture/écriture), react-toastify
+- **Intégrations API** : Appels Axios, gestion d'erreurs HTTP (400/500/réseau)
+- **Context React** : State management global avec UserContext
+- **Navigation** : React Router entre pages Home et Register
 - **Optimisations React** : useMemo, event listeners cleanup, DOM polling
 - **Détection autofill** : Event listeners, polling DOM, validation instantanée
 - **Accessibilité** : Rôles ARIA, labels, navigation clavier
+
+**Fichiers** :
+
+- UserForm.test.jsx (30 tests)
+- UserContext.test.jsx (10 tests)
+- Home.test.jsx (11 tests)
+- Register.test.jsx (13 tests)
+- api.test.js (9 tests)
+- App.test.js (5 tests)
+
+#### Tests End-to-End (E2E) - 18 tests
+
+**Objectif** : Valider les parcours utilisateur complets de bout en bout
+
+- **Navigation multi-pages** : Flux Home ↔ Register avec React Router
+- **Scénarios réels** : Inscription, validation, affichage liste, gestion d'état
+- **Intégration API complète** : Mocking des appels réseau avec cy.intercept()
+- **Gestion d'erreurs** : Résilience aux erreurs API (400/500/503/réseau)
+- **Tests de régression** : Persistance, redirection, reset formulaire
+- **Isolation totale** : Aucun appel réseau réel, tests déterministes
+
+**Fichiers** :
+
+- cypress/e2e/navigation.cy.js (18 tests)
+  - 1 test de scénario nominal complet
+  - 2 tests de validation et état inchangé
+  - 9 tests de navigation et flux utilisateur
+  - 6 tests de gestion d'erreurs API

@@ -27,26 +27,39 @@ Application React dédiée à l'apprentissage des tests unitaires et de l'intég
 ## Fonctionnalités
 
 - **Validation de formulaire utilisateur** avec feedback en temps réel
-- **Validation d'unicité d'email** avec localStorage (détection des doublons)
+- **Validation d'unicité d'email** avec vérification en base (détection des doublons)
+- **Intégration API RESTful** avec Axios et JSONPlaceholder
+- **Gestion d'état asynchrone** avec Context React et API calls
 - **Détection automatique de l'autofill Chrome** avec validation instantanée
-- **Validateurs modulaires** pour :
+- **Valid ateurs modulaires** pour :
   - Email (format RFC 5322 + unicité)
   - Âge (18-120 ans avec calcul précis)
   - Nom et prénom (format français)
   - Code postal français (5 chiffres)
 - **Navigation SPA** avec React Router (pages Accueil + Inscription)
-- **Gestion d'état partagé** via Context React pour persistance des données
-- **Tests complets** (221 tests unitaires/intégration + 11 tests E2E, 100% de couverture)
-- **Tests End-to-End** avec Cypress (scénarios de navigation complexes)
+- **Gestion d'erreurs HTTP** avec notifications toast (400/500/réseau)
+- **Tests complets avec mocking** (237 tests Jest + 18 tests Cypress E2E, 100% de couverture)
+- **Tests End-to-End** avec Cypress et cy.intercept() mocking
 - **CI/CD automatisé** avec GitHub Actions
 - **Documentation technique** générée automatiquement
 - **Déploiement continu** sur GitHub Pages
+
+### Architecture API
+
+L'application utilise une architecture client-serveur moderne :
+
+- **Client** : React SPA avec Axios pour les requêtes HTTP
+- **API** : JSONPlaceholder (https://jsonplaceholder.typicode.com)
+  - `GET /users` : Récupération de la liste des utilisateurs
+  - `POST /users` : Création d'un nouvel utilisateur
+- **État global** : Context React avec opérations asynchrones
+- **Gestion d'erreurs** : Try/catch avec toast notifications (react-toastify)
 
 ### Fonctionnalités avancées
 
 #### Validation d'unicité d'email
 
-- Détection des emails déjà enregistrés via localStorage
+- Détection des emails déjà enregistrés via UserContext (données API)
 - Comparaison case-insensitive (test@example.com = TEST@EXAMPLE.COM)
 - Message d'erreur explicite : "This email address is already registered"
 - Bouton submit désactivé en cas de doublon
@@ -118,16 +131,82 @@ npm run jsdoc
 
 ## Tests
 
-Le projet utilise **Jest** et **React Testing Library** pour les tests unitaires et d'intégration.
+Le projet utilise **Jest** et **React Testing Library** pour les tests unitaires/intégration, et **Cypress** pour les tests E2E, avec une stratégie de mocking complète pour isoler les tests de l'API externe.
 
 ### Couverture des tests
 
-- **Tests unitaires** : Tous les validateurs sont testés individuellement
-- **Tests d'intégration** : Le formulaire React et les pages sont testés avec des scénarios réels
-- **Tests E2E (Cypress)** : 11 tests de navigation et parcours utilisateur complets
-- **Couverture** : 100% des fonctions, branches et lignes (221 tests)
+- **Tests unitaires** : Tous les validateurs et services sont testés individuellement
+- **Tests d'intégration** : Le formulaire React, UserContext, et pages sont testés avec des scénarios réels
+- **Tests E2E (Cypress)** : 18 tests de navigation et parcours utilisateur complets avec API mocking
+  - 11 tests de navigation nominale et validation
+  - 7 tests de résilience aux erreurs API (400, 500, 503, réseau)
+- **Couverture** : 100% des branches (237 tests Jest + 18 tests Cypress)
+- **Isolation** : Aucun appel réseau réel grâce au mocking (jest.mock + cy.intercept)
 
 **[Plan de test complet (TEST_PLAN.md)](https://github.com/Galateee/Exercice-cours-test-unitaire/blob/main/TEST_PLAN.md)**
+
+### Stratégie de mocking
+
+#### Jest (Tests Unitaires/Intégration)
+
+L'application utilise `jest.mock()` pour isoler les tests des appels API réels :
+
+```javascript
+// Mock Axios dans api.test.js
+jest.mock("axios");
+axios.get.mockResolvedValue({ data: mockUsers });
+axios.post.mockResolvedValue({ data: { ...userData, id: 123 } });
+
+// Mock apiService dans UserContext.test.jsx
+jest.mock("../services/api");
+apiService.getUsers.mockResolvedValue([]);
+apiService.createUser.mockResolvedValue({ ...userData, id: 1 });
+```
+
+**Scénarios testés** :
+
+- Succès HTTP 200/201 (récupération/création)
+- Erreur client 400 (données invalides)
+- Erreur serveur 500 (internal server error)
+- Erreur réseau (timeout, connexion perdue)
+
+#### Cypress (Tests E2E)
+
+Cypress utilise `cy.intercept()` pour mocker les appels API pendant les tests :
+
+```javascript
+// Helper function pour setup unifié
+function setupApiIntercepts(existingUsers = []) {
+  cy.intercept("GET", "**/users", {
+    statusCode: 200,
+    body: existingUsers,
+  }).as("getUsers");
+
+  cy.intercept("POST", "**/users", (req) => {
+    req.reply({
+      statusCode: 201,
+      body: { ...req.body, id: Date.now() },
+    });
+  }).as("createUser");
+}
+
+// Utilisation dans les tests
+beforeEach(() => {
+  setupApiIntercepts();
+});
+
+cy.visit("/");
+cy.wait("@getUsers"); // Synchronisation explicite
+// ... actions utilisateur ...
+cy.wait("@createUser");
+```
+
+**Avantages** :
+
+- Tests déterministes (pas de dépendance réseau)
+- Contrôle total des réponses (statuts, délais, erreurs)
+- Tests rapides (pas d'appels HTTP réels)
+- CI/CD fiable (pas de rate limiting API)
 
 ### Exécution locale
 
@@ -176,7 +255,7 @@ Le projet implémente des tests End-to-End avec **Cypress** pour valider les par
 4. Redirection automatique vers l'Accueil
 5. Vérification "1 utilisateur inscrit" ET présence du nouvel utilisateur dans la liste
 
-#### Scénario d'Erreur
+#### Scénario d'Erreur de Validation
 
 1. Partant de l'état précédent (1 inscrit)
 2. Navigation vers le Formulaire
@@ -184,6 +263,33 @@ Le projet implémente des tests End-to-End avec **Cypress** pour valider les par
 4. Vérification de l'erreur affichée
 5. Retour vers l'Accueil
 6. Vérification "Toujours 1 utilisateur inscrit" et liste inchangée
+
+#### Scénarios d'Erreur API (Résilience)
+
+Tests de la robustesse de l'application face aux erreurs serveur avec `cy.intercept()` :
+
+1. **Erreur 400 - Données invalides**
+   - Mock POST /users → 400 "Email already exists"
+   - Vérification : toast d'erreur affiché, aucun utilisateur ajouté, formulaire toujours accessible
+
+2. **Erreur 500 - Serveur down**
+   - Mock POST /users → 500 "Internal Server Error"
+   - Vérification : toast "Server error. Please try again later.", application ne crash pas
+
+3. **Erreur Réseau - API inaccessible**
+   - Mock POST /users → `forceNetworkError: true`
+   - Vérification : toast "Network error. Please check your connection.", formulaire reste fonctionnel
+
+4. **Erreur GET - Chargement initial**
+   - Mock GET /users → 500 "Database connection failed"
+   - Vérification : page Home s'affiche quand même, compteur à 0, pas de crash
+
+5. **Retry après erreur**
+   - Premier essai : 400 → erreur affichée
+   - Correction email + nouvel essai : 201 → succès
+   - Vérification : redirection Home + utilisateur créé
+
+**Isolation complète** : Aucun appel réseau réel ne sort des tests E2E grâce aux intercepts Cypress.
 
 ### Exécution locale
 
@@ -307,17 +413,23 @@ Exercice-cours-test-unitaire/
 
 ### Frontend
 
-- **React** 19.2.4 - Framework UI (avec hooks : useState, useMemo, useEffect)
+- **React** 19.2.4 - Framework UI (avec hooks : useState, useMemo, useEffect, useContext)
 - **React DOM** 19.2.4 - Rendu React
 - **React Router DOM** 7.13.0 - Navigation SPA
-- **react-toastify** 11.0.3 - Notifications utilisateur
+- **Axios** 1.13.5 - Client HTTP pour appels API RESTful
+- **react-toastify** 11.0.3 - Notifications utilisateur (erreurs API, succès)
+
+### API & Services
+
+- **JSONPlaceholder** - API REST publique (typicode.com/users)
+- **Context API** - Gestion d'état global asynchrone
 
 ### Tests
 
-- **Jest** 27.5.1 - Framework de test
+- **Jest** 27.5.1 - Framework de test avec mocking (jest.mock)
 - **React Testing Library** 16.3.2 - Tests de composants React
 - **@testing-library/user-event** 14.6.1 - Simulation d'interactions utilisateur
-- **Cypress** 15.10.0 - Tests End-to-End
+- **Cypress** 15.10.0 - Tests End-to-End avec cy.intercept() mocking
 
 ### Outils de développement
 
@@ -345,17 +457,20 @@ Exercice-cours-test-unitaire/
 
 ## Objectifs pédagogiques
 
-Ce projet a été réalisé dans le cadre d'un exercice sur les tests unitaires et couvre :
+Ce projet a été réalisé dans le cadre d'un exercice sur les tests unitaires et l'intégration API :
 
-1. **Tests unitaires** - Validation de fonctions isolées
-2. **Tests d'intégration** - Validation de composants React
-3. **Tests E2E** - Tests de navigation et parcours utilisateur avec Cypress
-4. **Architecture SPA** - Navigation multi-pages avec React Router et Context API
-5. **TDD** - Test-Driven Development
-6. **Couverture de code** - 100% de couverture (221 UT/IT + 11 E2E)
-7. **CI/CD** - Pipeline automatisé complet avec tests E2E
-8. **Documentation** - Génération automatique avec JSDoc
-9. **Déploiement continu** - GitHub Pages
+1. **Tests unitaires** - Validation de fonctions isolées avec mocking
+2. **Tests d'intégration** - Validation de composants React avec API mockée
+3. **Tests E2E** - Tests de navigation et parcours utilisateur avec Cypress + cy.intercept()
+4. **Architecture API** - Intégration RESTful avec Axios et JSONPlaceholder
+5. **Mocking avancé** - jest.mock('axios'), cy.intercept(), scénarios d'erreur (400/500)
+6. **Architecture SPA** - Navigation multi-pages avec React Router et Context API asynchrone
+7. **Gestion d'erreurs** - Try/catch, toast notifications, états loading/error
+8. **TDD** - Test-Driven Development avec couverture complète
+9. **Couverture de code** - 100% de couverture (237 tests Jest + 18 tests Cypress E2E)
+10. **CI/CD** - Pipeline automatisé complet avec tests E2E
+11. **Documentation** - Génération automatique avec JSDoc
+12. **Déploiement continu** - GitHub Pages
 
 ## Auteur
 
