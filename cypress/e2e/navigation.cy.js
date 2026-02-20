@@ -6,13 +6,43 @@
  */
 
 /**
+ * Transform application user format to JSONPlaceholder format for mocking
+ * @param {Object} appUser - User in application format
+ * @returns {Object} User in JSONPlaceholder format
+ */
+function transformUserToApiFormat(appUser) {
+  return {
+    id: appUser.id,
+    name: `${appUser.firstName} ${appUser.lastName}`,
+    username: appUser.firstName.toLowerCase(),
+    email: appUser.email,
+    address: {
+      street: "Mock Street",
+      suite: "Suite 123",
+      city: appUser.city,
+      zipcode: appUser.postalCode,
+      geo: { lat: "0.0", lng: "0.0" },
+    },
+    phone: "000-000-0000",
+    website: "example.com",
+    company: {
+      name: "Mock Company",
+      catchPhrase: "Mock catchphrase",
+      bs: "mock bs",
+    },
+  };
+}
+
+/**
  * Helper to setup API intercepts for user management
- * @param {Array} existingUsers - Array of users to return in GET /users
+ * @param {Array} existingUsers - Array of users in application format (will be transformed to JSONPlaceholder format)
  */
 function setupApiIntercepts(existingUsers = []) {
+  const apiFormatUsers = existingUsers.map(transformUserToApiFormat);
+
   cy.intercept("GET", "https://jsonplaceholder.typicode.com/users", {
     statusCode: 200,
-    body: existingUsers,
+    body: apiFormatUsers,
   }).as("getUsers");
 
   cy.intercept("POST", "https://jsonplaceholder.typicode.com/users", (req) => {
@@ -378,9 +408,11 @@ describe("Navigation E2E Tests", () => {
       id: 1,
     };
 
+    // Configure intercept for reload - transform to JSONPlaceholder format
+    const apiFormatUser = transformUserToApiFormat(persistentUser);
     cy.intercept("GET", "https://jsonplaceholder.typicode.com/users", {
       statusCode: 200,
-      body: [persistentUser],
+      body: [apiFormatUser],
     }).as("getUsersAfterReload");
 
     cy.reload();
