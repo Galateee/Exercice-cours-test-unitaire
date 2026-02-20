@@ -1,7 +1,6 @@
 import axios from "axios";
 import apiService from "./api";
 
-// Mock axios
 jest.mock("axios");
 
 describe("API Service", () => {

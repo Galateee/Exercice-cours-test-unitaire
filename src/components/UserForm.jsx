@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import * as validators from "../validators";
+import { useUsers } from "../contexts/UserContext";
 import "react-toastify/dist/ReactToastify.css";
 import "./UserForm.css";
 
@@ -96,15 +97,16 @@ const UserForm = ({ onUserRegistered }) => {
   const [errors, setErrors] = useState(INITIAL_ERRORS);
   const [touched, setTouched] = useState(INITIAL_TOUCHED);
 
+  const { users } = useUsers();
+
   /**
    * Validates a single field using the appropriate validator function
    *
    * @param {string} fieldName - Name of the field to validate
    * @param {string} value - Value to validate
-   * @param {Array<Object>|null} existingUsers - Array of existing users for email uniqueness check, or null to read from localStorage
    * @returns {string} Error message if validation fails, empty string otherwise
    */
-  const validateField = (fieldName, value, existingUsers) => {
+  const validateField = (fieldName, value) => {
     try {
       switch (fieldName) {
         case "firstName":
@@ -116,7 +118,7 @@ const UserForm = ({ onUserRegistered }) => {
           return "";
 
         case "email":
-          validators.validateEmailComplete(value, existingUsers);
+          validators.validateEmailComplete(value, users);
           return "";
 
         case "birthDate":
@@ -160,7 +162,7 @@ const UserForm = ({ onUserRegistered }) => {
 
           setTouched((prev) => ({ ...prev, [fieldName]: true }));
 
-          const errorMessage = validateField(fieldName, input.value, null);
+          const errorMessage = validateField(fieldName, input.value);
           setErrors((prev) => ({ ...prev, [fieldName]: errorMessage }));
         }
       });
@@ -203,7 +205,7 @@ const UserForm = ({ onUserRegistered }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
 
     if (touched[name]) {
-      const errorMessage = validateField(name, value, null);
+      const errorMessage = validateField(name, value);
       setErrors((prev) => ({ ...prev, [name]: errorMessage }));
     }
   };
@@ -217,7 +219,7 @@ const UserForm = ({ onUserRegistered }) => {
     const { name, value } = e.target;
     setTouched((prev) => ({ ...prev, [name]: true }));
 
-    const errorMessage = validateField(name, value, null);
+    const errorMessage = validateField(name, value);
     setErrors((prev) => ({ ...prev, [name]: errorMessage }));
   };
 
@@ -225,10 +227,9 @@ const UserForm = ({ onUserRegistered }) => {
    * Checks if the entire form is valid
    * Validates all fields are filled and checks for any validation errors
    *
-   * @param {Array<Object>} existingUsers - Array of existing users for email uniqueness check (pass empty array if none)
    * @returns {boolean} True if form is valid, false otherwise
    */
-  const isFormValid = (existingUsers) => {
+  const isFormValid = () => {
     const allFieldsFilled = Object.values(formData).every((value) => value.trim() !== "");
     if (!allFieldsFilled) return false;
 
@@ -242,7 +243,7 @@ const UserForm = ({ onUserRegistered }) => {
     ];
 
     for (const field of fieldValidations) {
-      const error = validateField(field.name, field.value, existingUsers);
+      const error = validateField(field.name, field.value);
       if (error) return false;
     }
 
@@ -258,15 +259,7 @@ const UserForm = ({ onUserRegistered }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    let existingUsers = [];
-    try {
-      const storedUsers = localStorage.getItem("registeredUsers");
-      existingUsers = storedUsers ? JSON.parse(storedUsers) : [];
-    } catch {
-      existingUsers = [];
-    }
-
-    if (isFormValid(existingUsers)) {
+    if (isFormValid()) {
       const birthDate = new Date(formData.birthDate);
       const today = new Date();
       let age = today.getFullYear() - birthDate.getFullYear();
@@ -286,12 +279,16 @@ const UserForm = ({ onUserRegistered }) => {
         timestamp: new Date().toISOString(),
       };
 
-      existingUsers.push(userData);
-      localStorage.setItem("registeredUsers", JSON.stringify(existingUsers));
-
       if (onUserRegistered) {
         onUserRegistered(userData);
       } else {
+        try {
+          const storedUsers = JSON.parse(localStorage.getItem("registeredUsers") || "[]");
+          storedUsers.push(userData);
+          localStorage.setItem("registeredUsers", JSON.stringify(storedUsers));
+        } catch (error) {
+          localStorage.setItem("registeredUsers", JSON.stringify([userData]));
+        }
         toast.success("Form successfully submitted!", TOAST_CONFIG);
       }
 

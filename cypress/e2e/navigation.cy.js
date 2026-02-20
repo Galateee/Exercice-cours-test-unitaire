@@ -2,20 +2,40 @@
 
 /**
  * E2E Tests for Navigation between pages
- * Tests the routing and navigation flow of the application
+ * Tests the routing and navigation flow of the application with API integration
  */
+
+/**
+ * Helper to setup API intercepts for user management
+ * @param {Array} existingUsers - Array of users to return in GET /users
+ */
+function setupApiIntercepts(existingUsers = []) {
+  cy.intercept("GET", "https://jsonplaceholder.typicode.com/users", {
+    statusCode: 200,
+    body: existingUsers,
+  }).as("getUsers");
+
+  cy.intercept("POST", "https://jsonplaceholder.typicode.com/users", (req) => {
+    const newUser = { ...req.body, id: Date.now() };
+    req.reply({
+      statusCode: 201,
+      body: newUser,
+    });
+  }).as("createUser");
+}
 
 /**
  * Nominal Scenario - Navigation and new user registration
  */
 describe("Nominal Scenario - Navigation and registration", () => {
   beforeEach(() => {
-    cy.clearLocalStorage();
+    setupApiIntercepts([]);
   });
 
   it("should allow user registration and see counter and list update", () => {
     // 1. Navigate to Home → Verify "0 users registered" and empty list
     cy.visit("/");
+    cy.wait("@getUsers");
     cy.get("[data-cy='home-page']").should("be.visible");
     cy.get("[data-cy='user-count-value']").should("contain", "0");
     cy.get("[data-cy='empty-state']").should("be.visible");
@@ -41,9 +61,11 @@ describe("Nominal Scenario - Navigation and registration", () => {
     cy.get("[data-cy='input-city']").type("Paris");
 
     cy.get("[data-cy='submit-button']").should("not.be.disabled");
-    cy.get("[data-cy='submit-button']").click();
 
-    // 4. Redirect or Navigate to Home
+    cy.get("[data-cy='submit-button']").click();
+    cy.wait("@createUser");
+
+    // 4. Redirect to Home - data is already in React state
     cy.url().should("not.include", "/register");
     cy.url().should("eq", Cypress.config().baseUrl + "/");
 
@@ -66,7 +88,6 @@ describe("Nominal Scenario - Navigation and registration", () => {
  */
 describe("Error Scenario - Validation and unchanged state", () => {
   beforeEach(() => {
-    cy.clearLocalStorage();
     const existingUser = {
       firstName: "Marie",
       lastName: "Martin",
@@ -75,15 +96,15 @@ describe("Error Scenario - Validation and unchanged state", () => {
       postalCode: "69001",
       city: "Lyon",
       timestamp: new Date().toISOString(),
+      id: 1,
     };
-    cy.window().then((win) => {
-      win.localStorage.setItem("registeredUsers", JSON.stringify([existingUser]));
-    });
+    setupApiIntercepts([existingUser]);
+    cy.visit("/");
+    cy.wait("@getUsers");
   });
 
   it("should reject an already registered email and keep state unchanged (1 user)", () => {
     // 1. Starting from previous state (1 registered user)
-    cy.visit("/");
     cy.get("[data-cy='user-count-value']").should("contain", "1");
     cy.get("[data-cy='users-tbody']").within(() => {
       cy.contains("Marie").should("be.visible");
@@ -97,7 +118,6 @@ describe("Error Scenario - Validation and unchanged state", () => {
     // 3. Attempt to add with invalid data (email already taken)
     cy.get("[data-cy='input-firstName']").type("Pierre");
     cy.get("[data-cy='input-lastName']").type("Dubois");
-    cy.get("[data-cy='input-email']").type("marie.martin@example.com"); // Email already in use
 
     const birthDate = new Date();
     birthDate.setFullYear(birthDate.getFullYear() - 25);
@@ -107,7 +127,8 @@ describe("Error Scenario - Validation and unchanged state", () => {
     cy.get("[data-cy='input-postalCode']").type("33000");
     cy.get("[data-cy='input-city']").type("Bordeaux");
 
-    cy.get("[data-cy='input-email']").focus().blur();
+    cy.get("[data-cy='input-email']").type("marie.martin@example.com");
+    cy.get("[data-cy='input-email']").blur();
 
     // 4. Verify the error is displayed
     cy.get("[data-cy='error-email']").should("be.visible");
@@ -130,7 +151,6 @@ describe("Error Scenario - Validation and unchanged state", () => {
 
   it("should reject a form with empty fields and keep state unchanged (1 user)", () => {
     // 1. Starting from previous state (1 registered user)
-    cy.visit("/");
     cy.get("[data-cy='user-count-value']").should("contain", "1");
 
     // 2. Navigate to the Form
@@ -164,8 +184,9 @@ describe("Error Scenario - Validation and unchanged state", () => {
  */
 describe("Navigation E2E Tests", () => {
   beforeEach(() => {
-    cy.clearLocalStorage();
+    setupApiIntercepts([]);
     cy.visit("/");
+    cy.wait("@getUsers");
   });
 
   /**
@@ -229,11 +250,11 @@ describe("Navigation E2E Tests", () => {
     cy.get('input[name="city"]').type("Paris");
 
     cy.get('button[type="submit"]').click();
+    cy.wait("@createUser");
 
     cy.url().should("not.include", "/register");
 
     cy.contains("User successfully registered").should("be.visible");
-
     cy.contains("Total users:").should("contain", "1");
     cy.contains("John").should("be.visible");
     cy.contains("Doe").should("be.visible");
@@ -279,6 +300,7 @@ describe("Navigation E2E Tests", () => {
       cy.get('input[name="city"]').type(user.city);
 
       cy.get('button[type="submit"]').click();
+      cy.wait("@createUser");
 
       cy.url().should("not.include", "/register");
 
@@ -314,6 +336,7 @@ describe("Navigation E2E Tests", () => {
     cy.get('input[name="city"]').type("Bordeaux");
 
     cy.get('button[type="submit"]').click();
+    cy.wait("@createUser");
 
     cy.url().should("not.include", "/register");
 
@@ -322,7 +345,7 @@ describe("Navigation E2E Tests", () => {
   });
 
   /**
-   * Test: Data persists across page reloads
+   * Test: Data persists across page reloads (via API)
    */
   it("should persist user data across page reloads", () => {
     cy.contains("Register New User").click();
@@ -340,12 +363,28 @@ describe("Navigation E2E Tests", () => {
     cy.get('input[name="city"]').type("Lille");
 
     cy.get('button[type="submit"]').click();
+    cy.wait("@createUser");
 
     cy.url().should("not.include", "/register");
-
     cy.contains("Persistent").should("be.visible");
 
+    const persistentUser = {
+      firstName: "Persistent",
+      lastName: "User",
+      email: "persistent@example.com",
+      age: 22,
+      postalCode: "59000",
+      city: "Lille",
+      id: 1,
+    };
+
+    cy.intercept("GET", "https://jsonplaceholder.typicode.com/users", {
+      statusCode: 200,
+      body: [persistentUser],
+    }).as("getUsersAfterReload");
+
     cy.reload();
+    cy.wait("@getUsersAfterReload");
 
     cy.contains("Persistent").should("be.visible");
     cy.contains("persistent@example.com").should("be.visible");
@@ -371,6 +410,7 @@ describe("Navigation E2E Tests", () => {
     cy.get('input[name="city"]').type("Nantes");
 
     cy.get('button[type="submit"]').click();
+    cy.wait("@createUser");
 
     cy.url().should("not.include", "/register");
 

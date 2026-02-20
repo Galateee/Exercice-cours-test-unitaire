@@ -2,12 +2,23 @@ import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import UserForm from "./UserForm.jsx";
 import { toast } from "react-toastify";
+import { useUsers } from "../contexts/UserContext";
 
 jest.mock("react-toastify", () => ({
   ToastContainer: () => null,
   toast: {
     success: jest.fn(),
   },
+}));
+
+jest.mock("../contexts/UserContext", () => ({
+  useUsers: jest.fn(() => ({
+    users: [],
+    addUser: jest.fn(),
+    refreshUsers: jest.fn(),
+    loading: false,
+    error: null,
+  })),
 }));
 
 /**
@@ -28,6 +39,14 @@ describe("UserForm - Integration Tests", () => {
     localStorageSpy = jest.spyOn(Storage.prototype, "setItem");
 
     jest.clearAllMocks();
+
+    useUsers.mockReturnValue({
+      users: [],
+      addUser: jest.fn(),
+      refreshUsers: jest.fn(),
+      loading: false,
+      error: null,
+    });
   });
 
   afterEach(() => {
@@ -592,7 +611,14 @@ describe("UserForm - Integration Tests", () => {
    */
   test("should show error message when email already exists", async () => {
     const existingUsers = [{ email: "existing@example.com", firstName: "Existing", lastName: "User" }];
-    localStorage.setItem("registeredUsers", JSON.stringify(existingUsers));
+
+    useUsers.mockReturnValue({
+      users: existingUsers,
+      addUser: jest.fn(),
+      refreshUsers: jest.fn(),
+      loading: false,
+      error: null,
+    });
 
     const user = userEvent.setup();
     render(<UserForm />);
@@ -612,7 +638,14 @@ describe("UserForm - Integration Tests", () => {
    */
   test("should reject duplicate email regardless of case", async () => {
     const existingUsers = [{ email: "test@example.com", firstName: "Test", lastName: "User" }];
-    localStorage.setItem("registeredUsers", JSON.stringify(existingUsers));
+
+    useUsers.mockReturnValue({
+      users: existingUsers,
+      addUser: jest.fn(),
+      refreshUsers: jest.fn(),
+      loading: false,
+      error: null,
+    });
 
     const user = userEvent.setup();
     render(<UserForm />);
@@ -632,7 +665,14 @@ describe("UserForm - Integration Tests", () => {
    */
   test("should prevent form submission when email already exists", async () => {
     const existingUsers = [{ email: "duplicate@example.com", firstName: "First", lastName: "User" }];
-    localStorage.setItem("registeredUsers", JSON.stringify(existingUsers));
+
+    useUsers.mockReturnValue({
+      users: existingUsers,
+      addUser: jest.fn(),
+      refreshUsers: jest.fn(),
+      loading: false,
+      error: null,
+    });
 
     const user = userEvent.setup();
     render(<UserForm />);
